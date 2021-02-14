@@ -10,7 +10,7 @@ find_package(GLEW REQUIRED)
 
 add_subdirectory(third-party)
 
-add_executable(Project main.cpp)
+add_executable(Project main.cpp src/Shader.cpp include/Shader.h include/Logger.h include/ObjParser.h include/Mesh.cpp include/Mesh.h include/Camera.cpp include/Camera.h)
 
 target_include_directories(Project PRIVATE ${OPENGL_INCLUDE_DIR})
 target_link_libraries(Project glfw ${OPENGL_LIBRARY} GLEW imgui stb_image)
