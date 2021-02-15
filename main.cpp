@@ -1,13 +1,18 @@
 #include <iostream>
+
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <imgui/imgui.h>
 #include <imgui/imgui_impl_glfw.h>
 #include <imgui/imgui_impl_opengl3.h>
+
 #include "include/Shader.h"
 #include "include/Mesh.h"
 #include "include/ObjParser.h"
 #include "include/Camera.h"
+
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
 
 int main() {
     GLFWwindow *window_;
@@ -34,14 +39,21 @@ int main() {
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
     Shader shader = Shader::fromFile("shaders/baseVertex.glsl", "shaders/baseFragment.glsl");
+    shader.use();
     auto [vertices, indices] = objParser::parseFile("objects/cube.obj");
     Mesh mesh = Mesh(indices, vertices);
-    Camera camera({0,0, 4.}, {0, 0, 0}, {0.f, 1.f, 0});
+    Camera camera({2,1, 5.}, {0, 0, 0}, {0.f, 1.f, 0});
     glm::mat4 view_ = camera.getViewMatrix();
     glm::lookAt(glm::vec3(0.0f, 0.0f, 4.0f),glm::vec3(0.0f, 0.0f, 0.0f),
                                  glm::vec3(0.0f, 1.0f, 0.0f));
     glm::mat4 model = glm::mat4(1.0f);
     glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float) width_ / (float) height_, 0.1f, 100.0f);
+    int width, height, nrChannels;
+    stbi_set_flip_vertically_on_load(true);
+    uint8_t *data = stbi_load("textures/wall.jpg", &width, &height, &nrChannels, 0);
+    std::cout << width << " " << height << std::endl;
+    mesh.setTexture(data, width, height);
+    //stbi_image_free(data);
     while (!glfwWindowShouldClose(window_)) {
         glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

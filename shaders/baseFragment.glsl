@@ -1,13 +1,16 @@
 #version 330
 out vec4 color;
 
-in vec3 normal;
 in vec3 pos;
-in vec2 texture;
+in vec3 normal;
+in vec2 texturePos;
+
+uniform sampler2D texture1;
 
 uniform vec3 lightPos;
 uniform vec3 lightColor;
 uniform float threshold;
+
 
 
 void main()
@@ -19,5 +22,6 @@ void main()
     vec3 diffuse = diff * lightColor;
     vec3 result = (ambient+diffuse) * vec3(0.6f, 0.6f, 0.6f);
     color = vec4(result, 1.f);
+    color = texture(texture1, texturePos);
 }
 //

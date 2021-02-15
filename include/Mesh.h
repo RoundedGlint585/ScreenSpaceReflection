@@ -20,20 +20,18 @@ public:
 
 public:
 
-    Mesh(std::vector<uint32_t> indices, std::initializer_list<std::vector<Mesh::Vertex>> list);
-
     Mesh(std::vector<uint32_t> indices, std::vector<Mesh::Vertex>  vertices);
     Mesh() = default;
 
     void draw(const Shader &shader) const;
-
+    void setTexture(const uint8_t *data, size_t width, size_t height);
 private:
     void initMesh();
 
     uint32_t VAO_, VBO_, EBO_;
     std::vector<Mesh::Vertex> vertices_;
     std::vector<uint32_t> indices_;
-    uint32_t morphPositionCount;
+    uint32_t texture_;
 };
 
 
