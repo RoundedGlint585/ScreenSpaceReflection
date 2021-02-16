@@ -17,6 +17,10 @@ public:
         glm::vec3 normal;
         glm::vec2 texture;
     };
+    struct Material {
+        float roughness = 0.1;
+        float metallic = 0.1;
+    };
 
 public:
 
@@ -25,6 +29,11 @@ public:
 
     void draw(const Shader &shader) const;
     void setTexture(const uint8_t *data, size_t width, size_t height);
+
+    glm::mat4 getModelMatrix() const;
+    Material getMaterial() const;
+
+    void updateMaterial(float roughness, float metallic);
 private:
     void initMesh();
 
@@ -32,6 +41,7 @@ private:
     std::vector<Mesh::Vertex> vertices_;
     std::vector<uint32_t> indices_;
     uint32_t texture_;
+    Material material_;
 };
 
 

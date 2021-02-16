@@ -10,6 +10,7 @@
 #include "include/Mesh.h"
 #include "include/ObjParser.h"
 #include "include/Camera.h"
+#include "Scene.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
@@ -49,8 +50,12 @@ int main() {
     int width, height, nrChannels;
     stbi_set_flip_vertically_on_load(true);
     uint8_t *data = stbi_load("textures/wall.jpg", &width, &height, &nrChannels, 0);
-    std::cout << width << " " << height << std::endl;
     mesh.setTexture(data, width, height);
+
+    Scene scene;
+    scene.setCamera(camera);
+    scene.addMesh(mesh);
+
     //stbi_image_free(data);
     float roughness = 0.1f, metallic = 0.1f;
     while (!glfwWindowShouldClose(window_)) {
@@ -60,21 +65,15 @@ int main() {
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
         shader.use();
-        shader.setMat4("model", model);
-        shader.setMat4("view", view_ );
         shader.setMat4("projection", projection);
-        shader.setVec3("lightColor", {1.0f, 1.0f, 1.0f});
-        shader.setVec3("lightPos", {3.f, 0.f, 5.f});
-        shader.setVec3("cameraPos", camera.getCameraPosition());
-        shader.setFloat("metallic", metallic);
-        shader.setFloat("roughness", roughness);
-        mesh.draw(shader);
+        scene.render(shader);
 
         // GUI
         ImGui::Begin("Dissolve window");
 
         ImGui::SliderFloat("Rougness", &roughness, 0.f, 1.f);
         ImGui::SliderFloat("Metallic", &metallic, 0.f, 1.f);
+        mesh.updateMaterial(roughness, metallic);
         ImGui::End();
 
         ImGui::Render();

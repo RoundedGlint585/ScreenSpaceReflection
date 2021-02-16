@@ -44,7 +44,10 @@ void Mesh::draw(const Shader &shader) const {
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture_);
     shader.use();
+    shader.setFloat("metallic", material_.metallic);
+    shader.setFloat("roughness", material_.roughness);
     shader.setInt("texture1", 0); // or with shader class
+    shader.setMat4("model", getModelMatrix());
     glBindVertexArray(VAO_);
     glDrawElements(GL_TRIANGLES, indices_.size(), GL_UNSIGNED_INT, nullptr);
     glBindVertexArray(0);
@@ -64,5 +67,20 @@ void Mesh::setTexture(const uint8_t *data, size_t width, size_t height) {
     glGenerateMipmap(GL_TEXTURE_2D);
 
 
+
+}
+
+glm::mat4 Mesh::getModelMatrix() const {
+    //placeholder for now, maybe implement transform later
+    return glm::mat4(1.f);
+}
+
+Mesh::Material Mesh::getMaterial() const {
+    return material_;
+}
+
+void Mesh::updateMaterial(float roughness, float metallic) {
+    material_.roughness = roughness;
+    material_.metallic = metallic;
 
 }
