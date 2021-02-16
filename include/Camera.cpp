@@ -12,3 +12,7 @@ Camera::Camera(const glm::vec3 &position, const glm::vec3 &direction, const glm:
 glm::mat4 Camera::getViewMatrix() const {
     return glm::lookAt(position, direction, up);
 }
+
+glm::vec3 Camera::getCameraPosition() const {
+    return position;
+}

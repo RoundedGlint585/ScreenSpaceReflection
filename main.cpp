@@ -42,10 +42,8 @@ int main() {
     shader.use();
     auto [vertices, indices] = objParser::parseFile("objects/cube.obj");
     Mesh mesh = Mesh(indices, vertices);
-    Camera camera({2,1, 5.}, {0, 0, 0}, {0.f, 1.f, 0});
+    Camera camera({3,0, 5.}, {0, 0, 0}, {0.f, 1.f, 0});
     glm::mat4 view_ = camera.getViewMatrix();
-    glm::lookAt(glm::vec3(0.0f, 0.0f, 4.0f),glm::vec3(0.0f, 0.0f, 0.0f),
-                                 glm::vec3(0.0f, 1.0f, 0.0f));
     glm::mat4 model = glm::mat4(1.0f);
     glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float) width_ / (float) height_, 0.1f, 100.0f);
     int width, height, nrChannels;
@@ -54,6 +52,7 @@ int main() {
     std::cout << width << " " << height << std::endl;
     mesh.setTexture(data, width, height);
     //stbi_image_free(data);
+    float roughness = 0.1f, metallic = 0.1f;
     while (!glfwWindowShouldClose(window_)) {
         glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -65,13 +64,17 @@ int main() {
         shader.setMat4("view", view_ );
         shader.setMat4("projection", projection);
         shader.setVec3("lightColor", {1.0f, 1.0f, 1.0f});
-        shader.setVec3("lightPos", {0.f, 0.f, 3.f});
+        shader.setVec3("lightPos", {3.f, 0.f, 5.f});
+        shader.setVec3("cameraPos", camera.getCameraPosition());
+        shader.setFloat("metallic", metallic);
+        shader.setFloat("roughness", roughness);
         mesh.draw(shader);
 
         // GUI
         ImGui::Begin("Dissolve window");
-        float test;
-        ImGui::SliderFloat("Threshold Count", &test, 0.f, 1.f);
+
+        ImGui::SliderFloat("Rougness", &roughness, 0.f, 1.f);
+        ImGui::SliderFloat("Metallic", &metallic, 0.f, 1.f);
         ImGui::End();
 
         ImGui::Render();
