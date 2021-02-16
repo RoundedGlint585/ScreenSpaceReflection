@@ -49,11 +49,10 @@ public:
 
     void setMat4(std::string_view name, const glm::mat4 &mat) const;
 
+    Shader() = default;
 private:
 
     Shader(const std::string & vertexShaderData, const std::string & fragmentShaderData);
-
-    Shader() = default;
 
     uint32_t compileVertexShader(const std::string &vertexShaderData);
 

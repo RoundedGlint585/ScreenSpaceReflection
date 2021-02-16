@@ -7,8 +7,8 @@
 
 
 #include <vector>
-#include "include/Mesh.h"
-#include "include/Camera.h"
+#include "Mesh.h"
+#include "Camera.h"
 
 class Scene {
 public:
@@ -18,6 +18,7 @@ public:
     void addMesh(const Mesh &mesh);
 
     void setCamera(const Camera &camera);
+
 private:
     std::vector<Mesh> meshes_m;
     Camera camera_m;

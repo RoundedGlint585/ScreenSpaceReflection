@@ -2511,7 +2511,7 @@ struct ImColor {
 
 //-----------------------------------------------------------------------------
 // Draw List API (ImDrawCmd, ImDrawIdx, ImDrawVert, ImDrawChannel, ImDrawListSplitter, ImDrawListFlags, ImDrawList, ImDrawData)
-// Hold a series of drawing commands. The user provides a renderer for ImDrawData which essentially contains an array of ImDrawList.
+// Hold a series of drawing commands. The user provides a Renderer for ImDrawData which essentially contains an array of ImDrawList.
 //-----------------------------------------------------------------------------
 
 // Draw callbacks for advanced uses.
@@ -2527,8 +2527,8 @@ typedef void (*ImDrawCallback)(const ImDrawList *parent_list, const ImDrawCmd *c
 
 #endif
 
-// Special Draw callback value to request renderer back-end to reset the graphics/render state.
-// The renderer back-end needs to handle this special value, otherwise it will crash trying to call a function at this address.
+// Special Draw callback value to request Renderer back-end to reset the graphics/render state.
+// The Renderer back-end needs to handle this special value, otherwise it will crash trying to call a function at this address.
 // This is useful for example if you submitted callbacks which you know have altered the render state and you want it to be restored.
 // It is not done by default because they are many perfectly useful way of altering render state for imgui_lib contents (e.g. changing shader/blending settings before an Image call).
 #define ImDrawCallback_ResetRenderState     (ImDrawCallback)(-1)
@@ -2556,7 +2556,7 @@ struct ImDrawCmd {
 };
 
 // Vertex index
-// (to allow large meshes with 16-bits indices: set 'io.BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset' and handle ImDrawCmd::VtxOffset in the renderer back-end)
+// (to allow large meshes with 16-bits indices: set 'io.BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset' and handle ImDrawCmd::VtxOffset in the Renderer back-end)
 // (to use 32-bits indices: override with '#define ImDrawIdx unsigned int' in imconfig.h)
 #ifndef ImDrawIdx
 typedef unsigned short ImDrawIdx;

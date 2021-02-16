@@ -4917,7 +4917,7 @@ STBTT_DEF int stbtt_CompareUTF8toUTF16_bigendian(const char *s1, int len1, const
 //   0.6  (2012-07-17) fix warnings; added stbtt_ScaleForMappingEmToPixels,
 //                        stbtt_GetFontBoundingBox, stbtt_IsGlyphEmpty
 //   0.5  (2011-12-09) bugfixes:
-//                        subpixel glyph renderer computed wrong bounding box
+//                        subpixel glyph Renderer computed wrong bounding box
 //                        first vertex of shape can be off-curve (FreeSans)
 //   0.4b (2011-12-03) fixed an error in the font baking example
 //   0.4  (2011-12-01) kerning, subpixel rendering (tor)

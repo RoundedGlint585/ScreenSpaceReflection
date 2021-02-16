@@ -285,7 +285,7 @@ void ImGui_ImplOpenGL3_RenderDrawData(ImDrawData *draw_data) {
 
     // Setup desired GL state
     // Recreate the VAO every time (this is to easily allow multiple GL contexts to be rendered to. VAO are not shared among GL contexts)
-    // The renderer would actually work without any VAO bound, but then our VertexAttrib calls would overwrite the default one currently bound.
+    // The Renderer would actually work without any VAO bound, but then our VertexAttrib calls would overwrite the default one currently bound.
     GLuint vertex_array_object = 0;
 #ifndef IMGUI_IMPL_OPENGL_ES2
     glGenVertexArrays(1, &vertex_array_object);
@@ -310,7 +310,7 @@ void ImGui_ImplOpenGL3_RenderDrawData(ImDrawData *draw_data) {
             const ImDrawCmd *pcmd = &cmd_list->CmdBuffer[cmd_i];
             if (pcmd->UserCallback != NULL) {
                 // User callback, registered via ImDrawList::AddCallback()
-                // (ImDrawCallback_ResetRenderState is a special callback value used by the user to request the renderer to reset render state.)
+                // (ImDrawCallback_ResetRenderState is a special callback value used by the user to request the Renderer to reset render state.)
                 if (pcmd->UserCallback == ImDrawCallback_ResetRenderState)
                     ImGui_ImplOpenGL3_SetupRenderState(draw_data, fb_width, fb_height, vertex_array_object);
                 else

@@ -2,7 +2,7 @@
 // Created by roundedglint585 on 2/16/21.
 //
 
-#include "Scene.h"
+#include "../include/Scene.h"
 
 void Scene::render(const Shader &shader) {
     shader.use();
