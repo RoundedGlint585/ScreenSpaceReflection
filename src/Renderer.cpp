@@ -129,6 +129,7 @@ void Renderer::setShader(const Shader &shader) {
 }
 
 void Renderer::runMainLoop() {
+    Mesh *mesh = scene_m.getMesh(0);
     while (!glfwWindowShouldClose(window_m)) {
         renderToTexture(shaders_m[1], width_m, height_m);
         renderSceneToTexture(shaders_m[0]);
@@ -167,17 +168,17 @@ Renderer::~Renderer() {
 void Renderer::renderToTexture(Shader &shader, size_t width, size_t height) {
 // Set the list of draw buffers.
     shader.use();
-    glActiveTexture(GL_TEXTURE1);
+    glActiveTexture(GL_TEXTURE4);
     glBindTexture(GL_TEXTURE_2D, textureDepthId);
-    shader.setInt("depthTexture", 1);
+    shader.setInt("depthTexture", 4);
 
-    glActiveTexture(GL_TEXTURE2);
+    glActiveTexture(GL_TEXTURE5);
     glBindTexture(GL_TEXTURE_2D, texturePosId);
-    shader.setInt("positionTexture", 2);
+    shader.setInt("positionTexture", 5);
 
-    glActiveTexture(GL_TEXTURE3);
+    glActiveTexture(GL_TEXTURE6);
     glBindTexture(GL_TEXTURE_2D, textureNormalId);
-    shader.setInt("normalTexture", 3);
+    shader.setInt("normalTexture", 6);
 
     glBindFramebuffer(GL_FRAMEBUFFER, preRenderFramebufferId);
     glViewport(0, 0, width_m,
@@ -188,6 +189,9 @@ void Renderer::renderToTexture(Shader &shader, size_t width, size_t height) {
 
 void Renderer::renderSceneToTexture(Shader &shader) {
     shader.use();
+    glActiveTexture(GL_TEXTURE4);
+    glBindTexture(GL_TEXTURE_2D, textureSceneId);
+    shader.setInt("tFrame", 4);
     glBindFramebuffer(GL_FRAMEBUFFER, sceneRenderFramebufferId);
     glViewport(0, 0, width_m,
                height_m); // Render on the whole framebuffer, complete from the lower left corner to the upper right
@@ -216,7 +220,4 @@ void Renderer::postEffectScene(Shader &shader) {
     renderScene(shader);
 }
 
-//void Renderer::renderGui() {
-//
-//}
 

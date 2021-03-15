@@ -5,14 +5,16 @@ in vec3 WorldPos;
 in vec3 Normal;
 
 // material parameters
-uniform float metallic;
-uniform float roughness;
+uniform float roughness = 1.f;
 float ao = 0.5;
 
 // lights
 uniform vec3 lightPositions;
 uniform vec3 lightColors;
-uniform sampler2D texture1;
+uniform sampler2D textureBaseColor;
+uniform sampler2D textureNormal;
+uniform sampler2D textureMetallic;
+uniform sampler2D textureRoughness;
 uniform vec3 camPos;
 
 const float PI = 3.14159265359;
@@ -61,10 +63,12 @@ void main()
 {
     vec3 N = normalize(Normal);
     vec3 V = normalize(camPos - WorldPos);
-    vec3 albedo = texture(texture1, TexCoords).xyz;
+    vec3 albedo = texture(textureBaseColor, TexCoords).xyz;
     // calculate reflectance at normal incidence; if dia-electric (like plastic) use F0
     // of 0.04 and if it's a metal, use the albedo color as F0 (metallic workflow)
     vec3 F0 = vec3(0.04);
+    float metallic = texture(textureMetallic, TexCoords).x;
+    float roughness = texture(textureRoughness, TexCoords).x;
     F0 = mix(F0, albedo, metallic);
 
     // reflectance equation
@@ -113,6 +117,7 @@ void main()
     color = pow(color, vec3(1.0/2.2));
 
     FragColor = vec4(color, 1.0);
+    //FragColor = texture(textureBaseColor, TexCoords);
 }
 
 
