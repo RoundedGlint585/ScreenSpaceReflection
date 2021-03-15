@@ -7,6 +7,7 @@
 
 
 #include <vector>
+#include <optional>
 #include "Mesh.h"
 #include "Camera.h"
 
@@ -18,11 +19,12 @@ public:
     void addMesh(const Mesh &mesh);
 
     void setCamera(const Camera &camera);
+    const Camera& getCamera() const;
 
+    Mesh* getMesh(size_t index);
 private:
     std::vector<Mesh> meshes_m;
     Camera camera_m;
-
 };
 
 

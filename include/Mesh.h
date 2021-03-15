@@ -10,6 +10,7 @@
 #include <cstddef>
 #include "Shader.h"
 
+//now by default we will have normal, roughness, metallic cass
 class Mesh {
 public:
     struct Vertex {
@@ -18,8 +19,8 @@ public:
         glm::vec2 texture;
     };
     struct Material {
-        float roughness = 0.1;
-        float metallic = 0.1;
+        float roughness = 0.5;
+        float metallic = 0.3;
     };
 
 public:
@@ -34,6 +35,7 @@ public:
     Material getMaterial() const;
 
     void updateMaterial(float roughness, float metallic);
+    GLuint getTexture() const;
 private:
     void initMesh();
 

@@ -4,5 +4,22 @@
 
 #ifndef PROJECT_LOGGER_H
 #define PROJECT_LOGGER_H
+#include <iostream>
 
+namespace logger {
+    template <typename T>
+    void inline INFO(const T &message) {
+        std::cout << "\033[32m" << "INFO: " << message << "\033[0m" << std::endl;
+    }
+
+    template<typename T>
+    void inline WARNING(const T &message) {
+        std::cout << "\033[31m" << "WARNING: " << message << "\033[0m" << std::endl;
+    }
+
+    template<typename T>
+    void inline ERROR(const T &message) {
+        std::cout << "\033[31m" << "ERROR: " << message << "\033[0m" << std::endl;
+    }
+}
 #endif //PROJECT_LOGGER_H

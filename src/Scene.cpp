@@ -7,9 +7,9 @@
 void Scene::render(const Shader &shader) {
     shader.use();
     shader.setMat4("view", camera_m.getViewMatrix() );
-    shader.setVec3("lightColor", {1.0f, 1.0f, 1.0f});
-    shader.setVec3("lightPos", {3.f, 0.f, 5.f});
-    shader.setVec3("cameraPos", camera_m.getCameraPosition());
+    shader.setVec3("lightColors", {1.0f, 1.0f, 1.0f});
+    shader.setVec3("lightPositions", {1,5, 5.});
+    shader.setVec3("camPos", camera_m.getCameraPosition());
     for(auto &mesh: meshes_m){
         mesh.draw(shader);
     }
@@ -22,3 +22,16 @@ void Scene::addMesh(const Mesh &mesh) {
 void Scene::setCamera(const Camera &camera) {
     camera_m = camera;
 }
+
+Mesh* Scene::getMesh(size_t index) {
+    if(index < meshes_m.size()){
+        return &meshes_m[index];
+    }
+    return nullptr;
+}
+
+const Camera &Scene::getCamera() const {
+    return camera_m;
+}
+
+
