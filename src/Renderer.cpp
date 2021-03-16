@@ -60,28 +60,31 @@ void Renderer::init(size_t width, size_t height) {
         // Poor filtering
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     };
     createTexture(texturePosId);
     createTexture(textureNormalId);
     createTexture(textureDepthId);
-
-
-    // The depth buffer
-    GLuint depthrenderbuffer;
-    glGenRenderbuffers(1, &depthrenderbuffer);
-    glBindRenderbuffer(GL_RENDERBUFFER, depthrenderbuffer);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width_m, height_m);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthrenderbuffer);
+    createTexture(textureMetallicId);
 
     // Set "renderedTexture" as our colour attachement #0
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texturePosId, 0);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, textureNormalId, 0);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, textureDepthId, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, textureMetallicId, 0);
+    // The depth buffer
+    GLuint depthrenderbuffer;
+    glGenRenderbuffers(1, &depthrenderbuffer);
+    glBindRenderbuffer(GL_RENDERBUFFER, depthrenderbuffer);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width_m, height_m);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depthrenderbuffer);
+
+
     // Set the list of draw buffers.
-    GLenum DrawBuffers[3] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2};
-    glDrawBuffers(3, DrawBuffers); // "1" is the size of DrawBuffers
+    GLenum DrawBuffers[4] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3};
+    glDrawBuffers(4, DrawBuffers); // "1" is the size of DrawBuffers
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     // Always check that our framebuffer is ok
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
@@ -92,21 +95,23 @@ void Renderer::init(size_t width, size_t height) {
     glBindFramebuffer(GL_FRAMEBUFFER, sceneRenderFramebufferId);
     createTexture(textureSceneId);
 
-    glGenRenderbuffers(1, &depthrenderbuffer);
-    glBindRenderbuffer(GL_RENDERBUFFER, depthrenderbuffer);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width_m, height_m);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthrenderbuffer);
+    GLuint depthrenderbuffer1;
+    glGenRenderbuffers(1, &depthrenderbuffer1);
+    glBindRenderbuffer(GL_RENDERBUFFER, depthrenderbuffer1);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width_m, height_m);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depthrenderbuffer1);
 
     // Set "renderedTexture" as our colour attachement #0
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureSceneId, 0);
     // Set the list of draw buffers.
     GLenum SceneDrawBuffers[1] = {GL_COLOR_ATTACHMENT0};
-    glDrawBuffers(3, SceneDrawBuffers); // "1" is the size of DrawBuffers
+    glDrawBuffers(1, SceneDrawBuffers); // "1" is the size of DrawBuffers
 
     // Always check that our framebuffer is ok
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
         logger::ERROR("Frame buffer not created");
 
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 void Renderer::setScene(const Scene &scene) {
@@ -129,12 +134,12 @@ void Renderer::setShader(const Shader &shader) {
 }
 
 void Renderer::runMainLoop() {
-    Mesh *mesh = scene_m.getMesh(0);
+    Mesh *mesh = scene_m.getMesh(1);
     while (!glfwWindowShouldClose(window_m)) {
         renderToTexture(shaders_m[1], width_m, height_m);
         renderSceneToTexture(shaders_m[0]);
 
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
         glViewport(0, 0, width_m, height_m);
         postEffectScene(shaders_m[2]);
         ImGui_ImplOpenGL3_NewFrame();
@@ -150,7 +155,7 @@ void Renderer::runMainLoop() {
         shaders_m[2].setFloat("strength", strength);
         ImGui::End();
         ImGui::Begin("Texture check");
-        ImGui::Image((void *) (intptr_t) textureSceneId, ImVec2(width_m, height_m), ImVec2(0, 1), ImVec2(1, 0));
+        ImGui::Image((void *) (intptr_t)textureMetallicId, ImVec2(width_m, height_m), ImVec2(0, 1), ImVec2(1, 0));
         ImGui::End();
 
 
@@ -167,31 +172,19 @@ Renderer::~Renderer() {
 
 void Renderer::renderToTexture(Shader &shader, size_t width, size_t height) {
 // Set the list of draw buffers.
-    shader.use();
-    glActiveTexture(GL_TEXTURE4);
-    glBindTexture(GL_TEXTURE_2D, textureDepthId);
-    shader.setInt("depthTexture", 4);
-
-    glActiveTexture(GL_TEXTURE5);
-    glBindTexture(GL_TEXTURE_2D, texturePosId);
-    shader.setInt("positionTexture", 5);
-
-    glActiveTexture(GL_TEXTURE6);
-    glBindTexture(GL_TEXTURE_2D, textureNormalId);
-    shader.setInt("normalTexture", 6);
-
     glBindFramebuffer(GL_FRAMEBUFFER, preRenderFramebufferId);
+    shader.use();
+
     glViewport(0, 0, width_m,
                height_m); // Render on the whole framebuffer, complete from the lower left corner to the upper right
     renderScene(shader);
+
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 void Renderer::renderSceneToTexture(Shader &shader) {
     shader.use();
-    glActiveTexture(GL_TEXTURE4);
-    glBindTexture(GL_TEXTURE_2D, textureSceneId);
-    shader.setInt("tFrame", 4);
+
     glBindFramebuffer(GL_FRAMEBUFFER, sceneRenderFramebufferId);
     glViewport(0, 0, width_m,
                height_m); // Render on the whole framebuffer, complete from the lower left corner to the upper right
@@ -201,17 +194,25 @@ void Renderer::renderSceneToTexture(Shader &shader) {
 
 void Renderer::postEffectScene(Shader &shader) {
     shader.use();
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, textureDepthId);
-    shader.setInt("tDepth", 1);
+    glActiveTexture(GL_TEXTURE5);
+    glBindTexture(GL_TEXTURE_2D, texturePosId);
+    shader.setInt("tPos", 5);
 
-    glActiveTexture(GL_TEXTURE2);
+    glActiveTexture(GL_TEXTURE6);
     glBindTexture(GL_TEXTURE_2D, textureNormalId);
-    shader.setInt("tNorm", 2);
+    shader.setInt("tNorm", 6);
 
-    glActiveTexture(GL_TEXTURE3);
+    glActiveTexture(GL_TEXTURE7);
     glBindTexture(GL_TEXTURE_2D, textureSceneId);
-    shader.setInt("tFrame", 3);
+    shader.setInt("tFrame", 7);
+
+    glActiveTexture(GL_TEXTURE8);
+    glBindTexture(GL_TEXTURE_2D, textureMetallicId);
+    shader.setInt("tMetallic", 8);
+
+    glActiveTexture(GL_TEXTURE9);
+    glBindTexture(GL_TEXTURE_2D, textureDepthId);
+    shader.setInt("tDepth", 9);
 
     shader.setMat4("invView", glm::inverse(scene_m.getCamera().getViewMatrix()));
     shader.setMat4("view", scene_m.getCamera().getViewMatrix());

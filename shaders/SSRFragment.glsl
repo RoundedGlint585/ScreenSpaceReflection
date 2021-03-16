@@ -1,3 +1,104 @@
+//#version 330 core
+//layout (location = 0) out vec4 fragColor;
+//
+//uniform sampler2D tNorm; // in view space
+//uniform sampler2D tFrame;
+//uniform sampler2D tMettalic;
+//uniform sampler2D tPos; // in view space
+//uniform mat4 proj;
+//uniform vec3 skyColor = vec3(0.1, 0, 0.5);
+//
+//
+//
+//
+//
+//const int binarySearchCount = 10;
+//const int rayMarchCount = 30;
+//const float step = 0.05;
+//const float LLimiter = 0.2;
+//const float minRayStep = 0.2;
+//
+//vec3 getPosition(in vec2 texCoord) {
+//    return texture(tPos, texCoord).xyz;
+//}
+//
+//vec2 binarySearch(inout vec3 dir, inout vec3 hitCoord, inout float dDepth) {
+//    float depth;
+//
+//    vec4 projectedCoord;
+//
+//    for(int i = 0; i < binarySearchCount; i++) {
+//        projectedCoord = proj * vec4(hitCoord, 1.0);
+//        projectedCoord.xy /= projectedCoord.w;
+//        projectedCoord.xy = projectedCoord.xy * 0.5 + 0.5;
+//
+//        depth = getPosition(projectedCoord.xy).z;
+//
+//        dDepth = hitCoord.z - depth;
+//
+//        dir *= 0.5;
+//        if(dDepth > 0.0)
+//        hitCoord += dir;
+//        else
+//        hitCoord -= dir;
+//    }
+//
+//    projectedCoord = proj * vec4(hitCoord, 1.0);
+//    projectedCoord.xy /= projectedCoord.w;
+//    projectedCoord.xy = projectedCoord.xy * 0.5 + 0.5;
+//
+//    return vec2(projectedCoord.xy);
+//}
+//
+//vec2 rayCast(vec3 dir, inout vec3 hitCoord, out float dDepth) {
+//    dir *= step;
+//
+//    for (int i = 0; i < rayMarchCount; i++) {
+//        hitCoord += dir;
+//
+//        vec4 projectedCoord = proj * vec4(hitCoord, 1.0);
+//        projectedCoord.xy /= projectedCoord.w;
+//        projectedCoord.xy = projectedCoord.xy * 0.5 + 0.5;
+//
+//        float depth = getPosition(projectedCoord.xy).z;
+//        dDepth = hitCoord.z - depth;
+//
+//        if((dir.z - dDepth) < 1.2 && dDepth <= 0.0) return binarySearch(dir, hitCoord, dDepth);
+//    }
+//
+//    return vec2(-1.0);
+//}
+//
+//void main() {
+//    float reflectionStrength = texture(tMettalic, texCoord).r;
+//
+//
+//    vec3 normal = texture(tNorm, texCoord).xyz;
+//    vec3 viewPos = getPosition(texCoord);
+//
+//    // Reflection vector
+//    vec3 reflected = normalize(reflect(normalize(viewPos), normalize(normal)));
+//
+//    // Ray cast
+//    vec3 hitPos = viewPos;
+//    float dDepth;
+//    vec2 coords = rayCast(reflected * max(-viewPos.z, minRayStep), hitPos, dDepth);
+//
+//    float L = length(getPosition(coords) - viewPos);
+//    L = clamp(L * LLimiter, 0, 1);
+//    float error = 1 - L;
+//
+//    vec3 color = texture(tFrame, coords.xy).rgb;
+//
+//    if (coords.xy != vec2(-1.0)) {
+//        fragColor = mix(texture(tFrame, texCoord), vec4(color, 1.0), reflectionStrength);
+//    }else {
+//        fragColor = texture(tFrame, texCoord);
+//    }
+//    fragColor = vec4(reflectionStrength);
+//}
+
+
 #version 330 core
 out vec4 color;
 
@@ -11,14 +112,12 @@ uniform mat4 view;
 uniform sampler2D tDepth;
 uniform sampler2D tNorm;
 uniform sampler2D tFrame;
+uniform sampler2D tMetallic;
 
-
-uniform float strength;
-uniform float metallic;
+uniform float strength = 0.5f;
 uniform float spec;
 
-//noperspective in vec2 UV;
-in vec2 UV;
+vec2 UV = (gl_FragCoord.xy) / vec2(800.f, 600.f);
 
 const float step = 0.1;
 const float minRayStep = 0.1;
@@ -98,7 +197,7 @@ struct intersect{
     vec4 result;
 };
 
-intersect RayMarch(vec3 dir, inout vec3 hitCoord, out float dDepth)
+vec4 RayMarch(vec3 dir, inout vec3 hitCoord, out float dDepth)
 {
 
     dir *= step;
@@ -127,10 +226,9 @@ intersect RayMarch(vec3 dir, inout vec3 hitCoord, out float dDepth)
         {
             if(dDepth <= 0.0)
             {
-                vec4 Result;
-                Result = vec4(BinarySearch(dir, hitCoord, dDepth), 1.f);
+                vec4 Result = vec4(BinarySearch(dir, hitCoord, dDepth), 1.0);
 
-                return intersect(true, Result);
+                return Result;
             }
         }
 
@@ -138,7 +236,7 @@ intersect RayMarch(vec3 dir, inout vec3 hitCoord, out float dDepth)
     }
 
 
-    return intersect(false, vec4(projectedCoord.xy, depth, 0.f));
+    return vec4(projectedCoord.xy, depth, 0.0);
 }
 
 vec3 fresnelSchlick(float cosTheta, vec3 F0)
@@ -155,7 +253,11 @@ vec3 hash(vec3 a)
 }
 
 void main(){
-
+    float metallic = texture(tMetallic, UV).r;
+    if(metallic < 1){
+        color = texture(tFrame, UV);
+        return;
+    }
     vec3 viewNormal = vec3(texture(tNorm,UV) * invView);
     vec3 viewPos = CalcViewPosition(UV);
     vec3 albedo = texture(tFrame,UV).rgb;
@@ -173,12 +275,11 @@ void main(){
 
     vec3 wp = vec3(vec4(viewPos, 1.0) * invView);
     vec3 jitt = mix(vec3(0.0), vec3(hash(wp)), spec);
-    intersect res = RayMarch((vec3(jitt) + reflected * max(minRayStep, -viewPos.z)), hitPos, dDepth);
-    vec4 coords = res.result;
-
+    vec4 coords = RayMarch((vec3(jitt) + reflected * max(minRayStep, -viewPos.z)), hitPos, dDepth);
 
 
     vec2 dCoords = smoothstep(0.2, 0.6, abs(vec2(0.5, 0.5) - coords.xy));
+
 
     float screenEdgefactor = clamp(1.0 - (dCoords.x + dCoords.y), 0.0, 1.0);
 
@@ -187,136 +288,21 @@ void main(){
     -reflected.z;
 
     // Get color
-    vec3 SSR = texture(tFrame, coords.xy).rgb  * Fresnel;
-
-    //color = SSR;
-    if(res.isInter){
+    vec3 SSR = texture(tFrame, coords.xy).rgb;// * clamp(ReflectionMultiplier, 0.0, 0.9) * Fresnel;
+    color = vec4(SSR, 1.f);
+    if(SSR == vec3(0.2f)){
         color = texture(tFrame, UV);
-    }else {
-        color = vec4(mix(texture(tFrame, UV).rgb, SSR, strength), 1.f); //replace strength with noise or another texture
     }
-    //color = vec4(mix(texture(tFrame, UV).rgb, SSR, 0.6f), 1.f);
-    //color = vec4(SSR, 1.f);
-    //fragColor = mix(texture(baseImage, texCoord), vec4(skyColor, 1.0), reflectionStrength).rgb;
 
-    //color = texture(tFrame, UV);
-    //color = vec3(1.f);
+    //
+
+//    color = texture(tNorm, UV);
+    //color = vec4(vec3(metallic), 1.f);
 
 }
 
 
-//#version 330 core
-//out vec4 FragColor;
-//
-//float maxDistance = 15;
-//float resolution  = 0.3;
-//int   steps       = 10;
-//float thickness   = 0.5;
-//
-//uniform sampler2D positionTexture;
-//uniform sampler2D normalTexture;
-//uniform sampler2D depthTexture;
-//uniform mat4 invProj;
-//uniform vec2 viewPortSize;
-//uniform mat4 model;
-//uniform mat4 view;
-//uniform mat4 projection;
-//
-//vec3 PositionFromDepth(float depth, vec2 uvPos) {
-//    float z = depth * 2.0 - 1.0;
-//
-//    vec4 clipSpacePosition = vec4(uvPos * 2.0 - 1.0, z, 1.0);
-//    vec4 viewSpacePosition = invProj * clipSpacePosition;
-//
-//    // Perspective division
-//    viewSpacePosition /= viewSpacePosition.w;
-//
-//    return viewSpacePosition.xyz;
-//}
-//
-//float random (vec2 st) {
-//    return fract(sin(dot(st.xy,
-//    vec2(12.9898, 78.233)))*
-//    43758.5453123);
-//}
-//
-//vec3 getWorldPos(vec2 uv){
-//    vec4 place = texture(positionTexture, uv);
-//    place /= place.w;
-//    return place.xyz;
-//}
-//
-//vec2 createUVCoordFromWorld(vec3 worldPos){
-//    vec4 projectedCoord = projection * vec4(worldPos, 1.f);
-//    projectedCoord.xy /= projectedCoord.w;
-//    projectedCoord.xy = (projectedCoord.xy * 0.5 + 0.5);
-//    return projectedCoord.xy;
-//}
-//
-//void main()
-//{
-//    // standart color calculation
-//    vec3 N = normalize(normal);
-//    vec3 cameraDir = normalize(cameraPos - pos);
-//
-//    vec3 F0 = vec3(0.04);
-//    F0 = mix(F0, texture(texture1, texturePos).xyz, metallic);
-//    vec3 lightDir = normalize(lightPos - pos);
-//    float distance = length(lightPos - pos);
-//    float attenuation = 1.0;
-//    vec3 radiance = lightColor * attenuation;
-//
-//    // Cook-Torrance BRDF
-//
-//    vec3 color = getBRDFColorResponse(N, cameraDir, lightDir, roughness, F0, radiance);
-//
-//    // HDR tonemapping
-//    color = color / (color + vec3(1.0));
-//    ////    // gamma correct
-//    color = pow(color, vec3(1.0/2.4));
-//
-//    FragColor = vec4(color, 1.0);// base color
-//
-//    // reflection calculation
-//    vec2 currentPos = gl_FragCoord.xy/viewPortSize;
-//    float depth =  texture(depthTexture, currentPos).x;// depthTexture rgb filled with one value(d,d,d)
-//    vec3 worldPosition = PositionFromDepth(depth, currentPos);
-//    //FragColor = vec4(PositionFromDepth(depth, currentPos), 1.f);
-//    vec2 uvCoord = createUVCoordFromWorld(worldPosition);
-//    FragColor = texture(positionTexture, uvCoord);
-//
-//    vec3 normal = normalize(texture(normalTexture, currentPos).xyz);
-//    vec3 viewDir = normalize(worldPosition - cameraPos);
-//    vec3 reflectionDir = normalize(reflect(viewDir, normal));
-//
-//    //ray marching
-//    vec3 curRayPos = vec3(0);
-//    vec2 curUV = vec2(0);
-//    vec2 resultUV = vec2(0);
-//    float curLength = 1;
-//    bool isHitted = false;
-//    for (int i = 0; i < 10; i++){
-//        if (isHitted == false){
-//            curRayPos = worldPosition + reflectionDir * curLength;
-//            curUV = createUVCoordFromWorld(curRayPos);
-//            float curDepth = texture(depthTexture, curUV.xy).x;
-//            for (int j = 0; j < 16; j++){
-//                float dDepth = curRayPos.z - curDepth;
-//                if (abs(dDepth - curDepth) < 1.2){
-//                    resultUV.xy = curUV.xy;
-//                    isHitted = true;
-//                    break;
-//                }
-//                curDepth = texture(depthTexture, curUV.xy + (random(vec2(j)) * 2)).x;
-//            }
-//        }
-//    }
-//    if(isHitted){
-//        FragColor = texture(positionTexture, curUV.xy);
-//    }else{
-//        FragColor = vec4(0.f);
-//    }
-//    //FragColor = texture(positionTexture, curUV.xy);
-//    //   FragColor = vec4(curUV, 1.f);
-//}
-//
+
+
+
+
