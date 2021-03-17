@@ -51,6 +51,8 @@ private:
     GLuint texturePosId, textureNormalId, textureDepthId, textureMetallicId; //PreRender
     GLuint textureSceneId; // SceneRender
     GLuint preRenderFramebufferId, sceneRenderFramebufferId;
+    GLuint postProcessVAO;
+
 
     void loadShaders();
 

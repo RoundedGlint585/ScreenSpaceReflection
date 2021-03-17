@@ -1,4 +1,4 @@
-#version 330 core
+#version 420 core
 out vec4 color;
 
 uniform mat4 invView;
@@ -186,7 +186,6 @@ void main(){
     if (SSR == vec3(0.2f)){
         color = texture(tFrame, UV);
     }
-
 
 }
 

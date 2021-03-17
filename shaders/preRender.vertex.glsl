@@ -17,3 +17,4 @@ void main()
     normal = view * model * vec4(normals, 1.0f);
     texCoord = textures;
 }
+//

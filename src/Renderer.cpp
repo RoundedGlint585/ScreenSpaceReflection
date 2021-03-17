@@ -14,7 +14,7 @@ void Renderer::init(size_t width, size_t height) {
     height_m = height;
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 4);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     window_m = glfwCreateWindow(width_m, height_m, "Object", nullptr, nullptr);
     glfwMakeContextCurrent(window_m);
@@ -35,6 +35,9 @@ void Renderer::init(size_t width, size_t height) {
     initPreRenderFramebuffer();
 
     initSceneRenderFramebuffer();
+
+    glGenVertexArrays(1, &postProcessVAO);
+
 
 }
 
@@ -158,31 +161,35 @@ void Renderer::renderSceneToTexture(Shader &shader) {
 void Renderer::postEffectScene(Shader &shader) {
     glViewport(0, 0, width_m, height_m);
     shader.use();
-    glActiveTexture(GL_TEXTURE5);
+    glBindVertexArray(postProcessVAO);
+    glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texturePosId);
-    shader.setInt("tPos", 5);
+    shader.setInt("tPos", 0);
 
-    glActiveTexture(GL_TEXTURE6);
+    glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, textureNormalId);
-    shader.setInt("tNorm", 6);
+    shader.setInt("tNorm", 1);
 
-    glActiveTexture(GL_TEXTURE7);
+    glActiveTexture(GL_TEXTURE2);
     glBindTexture(GL_TEXTURE_2D, textureSceneId);
-    shader.setInt("tFrame", 7);
+    shader.setInt("tFrame", 2);
 
-    glActiveTexture(GL_TEXTURE8);
+    glActiveTexture(GL_TEXTURE3);
     glBindTexture(GL_TEXTURE_2D, textureMetallicId);
-    shader.setInt("tMetallic", 8);
+    shader.setInt("tMetallic", 3);
 
-    glActiveTexture(GL_TEXTURE9);
+    glActiveTexture(GL_TEXTURE4);
     glBindTexture(GL_TEXTURE_2D, textureDepthId);
-    shader.setInt("tDepth", 9);
+    shader.setInt("tDepth", 4);
 
     shader.setMat4("invView", glm::inverse(scene_m.getCamera().getViewMatrix()));
     shader.setMat4("view", scene_m.getCamera().getViewMatrix());
     shader.setMat4("proj", projection);
     shader.setMat4("invProj", glm::inverse(projection));
-    renderScene(shader);
+    glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    glBindVertexArray(0);
 }
 
 void Renderer::renderGui() {
