@@ -1,104 +1,3 @@
-//#version 330 core
-//layout (location = 0) out vec4 fragColor;
-//
-//uniform sampler2D tNorm; // in view space
-//uniform sampler2D tFrame;
-//uniform sampler2D tMettalic;
-//uniform sampler2D tPos; // in view space
-//uniform mat4 proj;
-//uniform vec3 skyColor = vec3(0.1, 0, 0.5);
-//
-//
-//
-//
-//
-//const int binarySearchCount = 10;
-//const int rayMarchCount = 30;
-//const float step = 0.05;
-//const float LLimiter = 0.2;
-//const float minRayStep = 0.2;
-//
-//vec3 getPosition(in vec2 texCoord) {
-//    return texture(tPos, texCoord).xyz;
-//}
-//
-//vec2 binarySearch(inout vec3 dir, inout vec3 hitCoord, inout float dDepth) {
-//    float depth;
-//
-//    vec4 projectedCoord;
-//
-//    for(int i = 0; i < binarySearchCount; i++) {
-//        projectedCoord = proj * vec4(hitCoord, 1.0);
-//        projectedCoord.xy /= projectedCoord.w;
-//        projectedCoord.xy = projectedCoord.xy * 0.5 + 0.5;
-//
-//        depth = getPosition(projectedCoord.xy).z;
-//
-//        dDepth = hitCoord.z - depth;
-//
-//        dir *= 0.5;
-//        if(dDepth > 0.0)
-//        hitCoord += dir;
-//        else
-//        hitCoord -= dir;
-//    }
-//
-//    projectedCoord = proj * vec4(hitCoord, 1.0);
-//    projectedCoord.xy /= projectedCoord.w;
-//    projectedCoord.xy = projectedCoord.xy * 0.5 + 0.5;
-//
-//    return vec2(projectedCoord.xy);
-//}
-//
-//vec2 rayCast(vec3 dir, inout vec3 hitCoord, out float dDepth) {
-//    dir *= step;
-//
-//    for (int i = 0; i < rayMarchCount; i++) {
-//        hitCoord += dir;
-//
-//        vec4 projectedCoord = proj * vec4(hitCoord, 1.0);
-//        projectedCoord.xy /= projectedCoord.w;
-//        projectedCoord.xy = projectedCoord.xy * 0.5 + 0.5;
-//
-//        float depth = getPosition(projectedCoord.xy).z;
-//        dDepth = hitCoord.z - depth;
-//
-//        if((dir.z - dDepth) < 1.2 && dDepth <= 0.0) return binarySearch(dir, hitCoord, dDepth);
-//    }
-//
-//    return vec2(-1.0);
-//}
-//
-//void main() {
-//    float reflectionStrength = texture(tMettalic, texCoord).r;
-//
-//
-//    vec3 normal = texture(tNorm, texCoord).xyz;
-//    vec3 viewPos = getPosition(texCoord);
-//
-//    // Reflection vector
-//    vec3 reflected = normalize(reflect(normalize(viewPos), normalize(normal)));
-//
-//    // Ray cast
-//    vec3 hitPos = viewPos;
-//    float dDepth;
-//    vec2 coords = rayCast(reflected * max(-viewPos.z, minRayStep), hitPos, dDepth);
-//
-//    float L = length(getPosition(coords) - viewPos);
-//    L = clamp(L * LLimiter, 0, 1);
-//    float error = 1 - L;
-//
-//    vec3 color = texture(tFrame, coords.xy).rgb;
-//
-//    if (coords.xy != vec2(-1.0)) {
-//        fragColor = mix(texture(tFrame, texCoord), vec4(color, 1.0), reflectionStrength);
-//    }else {
-//        fragColor = texture(tFrame, texCoord);
-//    }
-//    fragColor = vec4(reflectionStrength);
-//}
-
-
 #version 330 core
 out vec4 color;
 
@@ -136,13 +35,13 @@ vec3 CalcViewPosition(in vec2 TexCoord)
     vec3 rawPosition                = vec3(TexCoord, texture(tDepth, TexCoord).r);
 
     // Convert from (0, 1) range to (-1, 1)
-    vec4 ScreenSpacePosition        = vec4( rawPosition * 2 - 1, 1);
+    vec4 ScreenSpacePosition        = vec4(rawPosition * 2 - 1, 1);
 
     // Undo Perspective transformation to bring into view space
     vec4 ViewPosition               = invProj * ScreenSpacePosition;
 
     // Perform perspective divide and return
-    return                          ViewPosition.xyz / ViewPosition.w;
+    return ViewPosition.xyz / ViewPosition.w;
 }
 
 
@@ -166,7 +65,7 @@ vec3 BinarySearch(inout vec3 dir, inout vec3 hitCoord, inout float dDepth)
 
     vec4 projectedCoord;
 
-    for(int i = 0; i < numBinarySearchSteps; i++)
+    for (int i = 0; i < numBinarySearchSteps; i++)
     {
 
         projectedCoord = proj * vec4(hitCoord, 1.0);
@@ -179,7 +78,7 @@ vec3 BinarySearch(inout vec3 dir, inout vec3 hitCoord, inout float dDepth)
         dDepth = hitCoord.z - depth;
 
         dir *= 0.5;
-        if(dDepth > 0.0)
+        if (dDepth > 0.0)
         hitCoord += dir;
         else
         hitCoord -= dir;
@@ -208,7 +107,7 @@ vec4 RayMarch(vec3 dir, inout vec3 hitCoord, out float dDepth)
     vec4 projectedCoord;
 
 
-    for(int i = 0; i < maxSteps; i++)
+    for (int i = 0; i < maxSteps; i++)
     {
         hitCoord += dir;
 
@@ -217,14 +116,14 @@ vec4 RayMarch(vec3 dir, inout vec3 hitCoord, out float dDepth)
         projectedCoord.xy = projectedCoord.xy * 0.5 + 0.5;
 
         depth = texture(tDepth, projectedCoord.xy).z;
-        if(depth > 1000.0)
+        if (depth > 1000.0)
         continue;
 
         dDepth = hitCoord.z - depth;
 
-        if((dir.z - dDepth) < 1.2)
+        if ((dir.z - dDepth) < 1.2)
         {
-            if(dDepth <= 0.0)
+            if (dDepth <= 0.0)
             {
                 vec4 Result = vec4(BinarySearch(dir, hitCoord, dDepth), 1.0);
 
@@ -254,13 +153,13 @@ vec3 hash(vec3 a)
 
 void main(){
     float metallic = texture(tMetallic, UV).r;
-    if(metallic < 1){
+    if (metallic < 1){
         color = texture(tFrame, UV);
         return;
     }
-    vec3 viewNormal = vec3(texture(tNorm,UV) * invView);
+    vec3 viewNormal = vec3(texture(tNorm, UV) * invView);
     vec3 viewPos = CalcViewPosition(UV);
-    vec3 albedo = texture(tFrame,UV).rgb;
+    vec3 albedo = texture(tFrame, UV).rgb;
 
 
     vec3 F0 = vec3(0.04);
@@ -283,21 +182,13 @@ void main(){
 
     float screenEdgefactor = clamp(1.0 - (dCoords.x + dCoords.y), 0.0, 1.0);
 
-    float ReflectionMultiplier = pow(metallic, reflectionSpecularFalloffExponent) *
-    screenEdgefactor *
-    -reflected.z;
-
     // Get color
-    vec3 SSR = texture(tFrame, coords.xy).rgb;// * clamp(ReflectionMultiplier, 0.0, 0.9) * Fresnel;
+    vec3 SSR = mix(texture(tFrame, UV).rgb, texture(tFrame, coords.xy).rgb * Fresnel, metallic);
     color = vec4(SSR, 1.f);
-    if(SSR == vec3(0.2f)){
+    if (SSR == vec3(0.2f)){
         color = texture(tFrame, UV);
     }
 
-    //
-
-//    color = texture(tNorm, UV);
-    //color = vec4(vec3(metallic), 1.f);
 
 }
 

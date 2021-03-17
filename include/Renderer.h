@@ -22,9 +22,7 @@ public:
 
     void setScene(const Scene& scene);
 
-    void setShader(const Shader& shader);
-
-    void renderScene(Shader &shader);
+    void renderScene(Shader &shader, const glm::vec3 &backgroundColor = {0.2f, 0.2f, 0.2f});
 
     void renderSceneToTexture(Shader &shader);
 
@@ -36,28 +34,21 @@ public:
 
 private:
     enum shaderType{
-        BaseShader,
-        ViewPositionShader,
-        SSRShader,
+        PreRender_Shader,
+        Base_Shader,
+        SSR_Shader,
         Count
-    };
-
-    struct texture{
-        GLuint renderedTexture = -1;
-        size_t width, height;
     };
 
     void renderToTexture(Shader &shader, size_t width, size_t height);
     GLFWwindow *window_m;
     size_t width_m = 512, height_m = 512;
     Scene scene_m;
-    Shader shader_m;
     std::vector<Shader> shaders_m;
     glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float) width_m / (float) height_m, 0.1f, 100.0f);
     float roughness, metallic, strength;
     GLuint texturePosId, textureNormalId, textureDepthId, textureMetallicId; //PreRender
     GLuint textureSceneId; // SceneRender
-    GLuint postEffectSceneId; // PostEffect
     GLuint preRenderFramebufferId, sceneRenderFramebufferId;
 };
 

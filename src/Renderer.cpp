@@ -42,26 +42,17 @@ void Renderer::init(size_t width, size_t height) {
     logger::INFO("Compiling SSR shader");
     shaders_m.push_back(Shader::fromFile("shaders/SSR.vertex.glsl", "shaders/SSRFragment.glsl"));
 
-    // The framebuffer, which regroups 0, 1, or more textures, and 0 or 1 depth buffer.
-    preRenderFramebufferId = 0;
     glGenFramebuffers(1, &preRenderFramebufferId);
     glBindFramebuffer(GL_FRAMEBUFFER, preRenderFramebufferId);
-    //texturePosId, textureNormalId, textureDepthId
     auto createTexture = [this](GLuint &textureId) {
-        // The texture we're going to render to
         glGenTextures(1, &textureId);
 
-        // "Bind" the newly created texture : all future texture functions will modify this texture
         glBindTexture(GL_TEXTURE_2D, textureId);
 
-        // Give an empty image to OpenGL ( the last "0" means "empty" )
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width_m, height_m, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
 
-        // Poor filtering
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     };
     createTexture(texturePosId);
     createTexture(textureNormalId);
@@ -80,15 +71,13 @@ void Renderer::init(size_t width, size_t height) {
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width_m, height_m);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depthrenderbuffer);
 
-
-    // Set the list of draw buffers.
     GLenum DrawBuffers[4] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3};
-    glDrawBuffers(4, DrawBuffers); // "1" is the size of DrawBuffers
+    glDrawBuffers(4, DrawBuffers);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-    // Always check that our framebuffer is ok
-    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
         logger::ERROR("Frame buffer not created");
+    }
 
     sceneRenderFramebufferId = 0;
     glGenFramebuffers(1, &sceneRenderFramebufferId);
@@ -105,11 +94,11 @@ void Renderer::init(size_t width, size_t height) {
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureSceneId, 0);
     // Set the list of draw buffers.
     GLenum SceneDrawBuffers[1] = {GL_COLOR_ATTACHMENT0};
-    glDrawBuffers(1, SceneDrawBuffers); // "1" is the size of DrawBuffers
+    glDrawBuffers(1, SceneDrawBuffers);
 
-    // Always check that our framebuffer is ok
-    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
         logger::ERROR("Frame buffer not created");
+    }
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
@@ -118,8 +107,8 @@ void Renderer::setScene(const Scene &scene) {
     scene_m = scene;
 }
 
-void Renderer::renderScene(Shader &shader) {
-    glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
+void Renderer::renderScene(Shader &shader, const glm::vec3 &backgroundColor) {
+    glClearColor(backgroundColor.x, backgroundColor.y, backgroundColor.z, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     shader.use();
     shader.setMat4("projection", projection);
@@ -128,39 +117,12 @@ void Renderer::renderScene(Shader &shader) {
     scene_m.render(shader);
 }
 
-
-void Renderer::setShader(const Shader &shader) {
-    shader_m = shader;
-}
-
 void Renderer::runMainLoop() {
-    Mesh *mesh = scene_m.getMesh(1);
     while (!glfwWindowShouldClose(window_m)) {
         renderToTexture(shaders_m[1], width_m, height_m);
         renderSceneToTexture(shaders_m[0]);
-
-
-        glViewport(0, 0, width_m, height_m);
         postEffectScene(shaders_m[2]);
-        ImGui_ImplOpenGL3_NewFrame();
-        ImGui_ImplGlfw_NewFrame();
-        ImGui::NewFrame();
-        ImGui::Begin("Dissolve window");
-        ImGui::SliderFloat("spec", &roughness, 0.0001, 1.f);//temp sol
-        ImGui::SliderFloat("metallic", &metallic, 0.0001, 1.f);
-        ImGui::SliderFloat("strength", &strength, 0.0001, 1.f);
-        shaders_m[2].use();
-        shaders_m[2].setFloat("spec", roughness);
-        shaders_m[2].setFloat("metallic", metallic);
-        shaders_m[2].setFloat("strength", strength);
-        ImGui::End();
-        ImGui::Begin("Texture check");
-        ImGui::Image((void *) (intptr_t)textureMetallicId, ImVec2(width_m, height_m), ImVec2(0, 1), ImVec2(1, 0));
-        ImGui::End();
-
-
-        ImGui::Render();
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+        renderGui();
         glfwSwapBuffers(window_m);
         glfwPollEvents();
     }
@@ -177,7 +139,7 @@ void Renderer::renderToTexture(Shader &shader, size_t width, size_t height) {
 
     glViewport(0, 0, width_m,
                height_m); // Render on the whole framebuffer, complete from the lower left corner to the upper right
-    renderScene(shader);
+    renderScene(shader, {0.f, 0.f, 0.f});
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
@@ -193,6 +155,7 @@ void Renderer::renderSceneToTexture(Shader &shader) {
 }
 
 void Renderer::postEffectScene(Shader &shader) {
+    glViewport(0, 0, width_m, height_m);
     shader.use();
     glActiveTexture(GL_TEXTURE5);
     glBindTexture(GL_TEXTURE_2D, texturePosId);
@@ -219,6 +182,26 @@ void Renderer::postEffectScene(Shader &shader) {
     shader.setMat4("proj", projection);
     shader.setMat4("invProj", glm::inverse(projection));
     renderScene(shader);
+}
+
+void Renderer::renderGui() {
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+    ImGui::Begin("Dissolve window");
+    ImGui::SliderFloat("spec", &roughness, 0.0001, 1.f);//temp sol
+    ImGui::SliderFloat("metallic", &metallic, 0.0001, 1.f);
+    ImGui::SliderFloat("strength", &strength, 0.0001, 1.f);
+    shaders_m[2].use();
+    shaders_m[2].setFloat("spec", roughness);
+    shaders_m[2].setFloat("metallic", metallic);
+    shaders_m[2].setFloat("strength", strength);
+    ImGui::End();
+    ImGui::Begin("Texture check");
+    ImGui::Image((void *) (intptr_t) textureMetallicId, ImVec2(width_m, height_m), ImVec2(0, 1), ImVec2(1, 0));
+    ImGui::End();
+    ImGui::Render();
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
 
