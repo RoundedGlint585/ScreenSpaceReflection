@@ -6,8 +6,6 @@ uniform mat4 proj;
 uniform mat4 invProj;
 uniform mat4 view;
 
-
-
 uniform sampler2D tDepth;
 uniform sampler2D tNorm;
 uniform sampler2D tFrame;

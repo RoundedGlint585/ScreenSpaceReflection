@@ -41,6 +41,7 @@ private:
     };
 
     void renderToTexture(Shader &shader, size_t width, size_t height);
+    void createEmptyTexture(GLuint &textureId, size_t width, size_t height);
     GLFWwindow *window_m;
     size_t width_m = 512, height_m = 512;
     Scene scene_m;
@@ -50,6 +51,14 @@ private:
     GLuint texturePosId, textureNormalId, textureDepthId, textureMetallicId; //PreRender
     GLuint textureSceneId; // SceneRender
     GLuint preRenderFramebufferId, sceneRenderFramebufferId;
+
+    void loadShaders();
+
+    void initPreRenderFramebuffer();
+
+    void initSceneRenderFramebuffer();
+
+    void initGUI() const;
 };
 
 

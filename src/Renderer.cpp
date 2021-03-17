@@ -21,55 +21,74 @@ void Renderer::init(size_t width, size_t height) {
     glViewport(0, 0, width_m, height_m);
     glewInit();
 
+    initGUI();
 
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
+
+    projection = glm::perspective(glm::radians(45.0f), (float) width_m / (float) height_m, 0.1f, 100.0f);
+
+    loadShaders();
+
+    initPreRenderFramebuffer();
+
+    initSceneRenderFramebuffer();
+
+}
+
+void Renderer::initGUI() const {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO &io = ImGui::GetIO();
     ImGui_ImplGlfw_InitForOpenGL(window_m, true);
     ImGui_ImplOpenGL3_Init();
     ImGui::StyleColorsDark();
+}
 
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE);
-    projection = glm::perspective(glm::radians(45.0f), (float) width_m / (float) height_m, 0.1f, 100.0f);
+void Renderer::initSceneRenderFramebuffer() {
+    sceneRenderFramebufferId = 0;
+    glGenFramebuffers(1, &sceneRenderFramebufferId);
+    glBindFramebuffer(GL_FRAMEBUFFER, sceneRenderFramebufferId);
+    createEmptyTexture(textureSceneId, width_m, height_m);
 
-    logger::INFO("Compiling base shader");
-    shaders_m.push_back(Shader::fromFile("shaders/baseVertex.glsl", "shaders/baseFragment.glsl"));
-    logger::INFO("Compiling view position shader");
-    shaders_m.push_back(Shader::fromFile("shaders/preRender.vertex.glsl", "shaders/preRender.fragment.glsl"));
-    logger::INFO("Compiling SSR shader");
-    shaders_m.push_back(Shader::fromFile("shaders/SSR.vertex.glsl", "shaders/SSRFragment.glsl"));
+    GLuint depthrenderbuffer;
+    glGenRenderbuffers(1, &depthrenderbuffer);
+    glBindRenderbuffer(GL_RENDERBUFFER, depthrenderbuffer);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width_m, height_m);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthrenderbuffer);
 
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureSceneId, 0);
+    GLenum SceneDrawBuffers[1] = {GL_COLOR_ATTACHMENT0};
+    glDrawBuffers(1, SceneDrawBuffers);
+
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+        logger::ERROR("Frame buffer not created");
+    }
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void Renderer::initPreRenderFramebuffer() {
     glGenFramebuffers(1, &preRenderFramebufferId);
     glBindFramebuffer(GL_FRAMEBUFFER, preRenderFramebufferId);
-    auto createTexture = [this](GLuint &textureId) {
-        glGenTextures(1, &textureId);
 
-        glBindTexture(GL_TEXTURE_2D, textureId);
+    createEmptyTexture(texturePosId, width_m, height_m);
+    createEmptyTexture(textureNormalId, width_m, height_m);
+    createEmptyTexture(textureDepthId, width_m, height_m);
+    createEmptyTexture(textureMetallicId, width_m, height_m);
 
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width_m, height_m, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    };
-    createTexture(texturePosId);
-    createTexture(textureNormalId);
-    createTexture(textureDepthId);
-    createTexture(textureMetallicId);
-
-    // Set "renderedTexture" as our colour attachement #0
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texturePosId, 0);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, textureNormalId, 0);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, textureDepthId, 0);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, textureMetallicId, 0);
-    // The depth buffer
+
+    //depth buffer attachment
     GLuint depthrenderbuffer;
     glGenRenderbuffers(1, &depthrenderbuffer);
     glBindRenderbuffer(GL_RENDERBUFFER, depthrenderbuffer);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width_m, height_m);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depthrenderbuffer);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width_m, height_m);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthrenderbuffer);
 
     GLenum DrawBuffers[4] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3};
     glDrawBuffers(4, DrawBuffers);
@@ -78,29 +97,17 @@ void Renderer::init(size_t width, size_t height) {
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
         logger::ERROR("Frame buffer not created");
     }
+}
 
-    sceneRenderFramebufferId = 0;
-    glGenFramebuffers(1, &sceneRenderFramebufferId);
-    glBindFramebuffer(GL_FRAMEBUFFER, sceneRenderFramebufferId);
-    createTexture(textureSceneId);
+void Renderer::loadShaders() {
+    logger::INFO("Compiling view position shader");
+    shaders_m.push_back(Shader::fromFile("shaders/preRender.vertex.glsl", "shaders/preRender.fragment.glsl"));
 
-    GLuint depthrenderbuffer1;
-    glGenRenderbuffers(1, &depthrenderbuffer1);
-    glBindRenderbuffer(GL_RENDERBUFFER, depthrenderbuffer1);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width_m, height_m);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, depthrenderbuffer1);
+    logger::INFO("Compiling base shader");
+    shaders_m.push_back(Shader::fromFile("shaders/baseVertex.glsl", "shaders/baseFragment.glsl"));
 
-    // Set "renderedTexture" as our colour attachement #0
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureSceneId, 0);
-    // Set the list of draw buffers.
-    GLenum SceneDrawBuffers[1] = {GL_COLOR_ATTACHMENT0};
-    glDrawBuffers(1, SceneDrawBuffers);
-
-    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-        logger::ERROR("Frame buffer not created");
-    }
-
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    logger::INFO("Compiling SSR shader");
+    shaders_m.push_back(Shader::fromFile("shaders/SSR.vertex.glsl", "shaders/SSRFragment.glsl"));
 }
 
 void Renderer::setScene(const Scene &scene) {
@@ -119,9 +126,9 @@ void Renderer::renderScene(Shader &shader, const glm::vec3 &backgroundColor) {
 
 void Renderer::runMainLoop() {
     while (!glfwWindowShouldClose(window_m)) {
-        renderToTexture(shaders_m[1], width_m, height_m);
-        renderSceneToTexture(shaders_m[0]);
-        postEffectScene(shaders_m[2]);
+        renderToTexture(shaders_m[PreRender_Shader], width_m, height_m);
+        renderSceneToTexture(shaders_m[Base_Shader]);
+        postEffectScene(shaders_m[SSR_Shader]);
         renderGui();
         glfwSwapBuffers(window_m);
         glfwPollEvents();
@@ -129,27 +136,21 @@ void Renderer::runMainLoop() {
 }
 
 Renderer::~Renderer() {
-    delete window_m;
+    glfwDestroyWindow(window_m);
 }
 
 void Renderer::renderToTexture(Shader &shader, size_t width, size_t height) {
-// Set the list of draw buffers.
-    glBindFramebuffer(GL_FRAMEBUFFER, preRenderFramebufferId);
     shader.use();
-
-    glViewport(0, 0, width_m,
-               height_m); // Render on the whole framebuffer, complete from the lower left corner to the upper right
+    glBindFramebuffer(GL_FRAMEBUFFER, preRenderFramebufferId);
+    glViewport(0, 0, width, height);
     renderScene(shader, {0.f, 0.f, 0.f});
-
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 void Renderer::renderSceneToTexture(Shader &shader) {
     shader.use();
-
     glBindFramebuffer(GL_FRAMEBUFFER, sceneRenderFramebufferId);
-    glViewport(0, 0, width_m,
-               height_m); // Render on the whole framebuffer, complete from the lower left corner to the upper right
+    glViewport(0, 0, width_m, height_m);
     renderScene(shader);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
@@ -203,5 +204,17 @@ void Renderer::renderGui() {
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
+
+void Renderer::createEmptyTexture(GLuint &textureId, size_t width, size_t height) {
+    glGenTextures(1, &textureId);
+
+    glBindTexture(GL_TEXTURE_2D, textureId);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+}
+
 
 
