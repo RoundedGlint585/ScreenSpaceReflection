@@ -1,8 +1,7 @@
 #version 330 core
-layout(location = 0) out vec4 posColor;
-layout(location = 1) out vec4 normalColor;
-layout(location = 2) out vec4 depthColor;
-layout(location = 3) out vec4 metallicColor;
+layout(location = 0) out vec4 normalColor;
+layout(location = 1) out vec4 depthColor;
+layout(location = 2) out vec4 metallicColor;
 in vec4 pos;
 in vec4 normal;
 in vec2 texCoord;
@@ -12,7 +11,6 @@ uniform sampler2D textureMetallic;
 
 void main()
 {
-    posColor = pos;
     normalColor = normal;
     depthColor = vec4(vec3(gl_FragCoord.z), 1.f);
     float metallic = texture(textureMetallic, texCoord).r;

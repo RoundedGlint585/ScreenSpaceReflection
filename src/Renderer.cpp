@@ -76,15 +76,13 @@ void Renderer::initPreRenderFramebuffer() {
     glGenFramebuffers(1, &preRenderFramebufferId);
     glBindFramebuffer(GL_FRAMEBUFFER, preRenderFramebufferId);
 
-    createEmptyTexture(texturePosId, width_m, height_m);
     createEmptyTexture(textureNormalId, width_m, height_m);
     createEmptyTexture(textureDepthId, width_m, height_m);
     createEmptyTexture(textureMetallicId, width_m, height_m);
 
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texturePosId, 0);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, textureNormalId, 0);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, textureDepthId, 0);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, textureMetallicId, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureNormalId, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, textureDepthId, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, textureMetallicId, 0);
 
     //depth buffer attachment
     GLuint depthrenderbuffer;
@@ -93,8 +91,8 @@ void Renderer::initPreRenderFramebuffer() {
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width_m, height_m);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthrenderbuffer);
 
-    GLenum DrawBuffers[4] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3};
-    glDrawBuffers(4, DrawBuffers);
+    GLenum DrawBuffers[3] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2};
+    glDrawBuffers(3, DrawBuffers);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
@@ -162,25 +160,22 @@ void Renderer::postEffectScene(Shader &shader) {
     glViewport(0, 0, width_m, height_m);
     shader.use();
     glBindVertexArray(postProcessVAO);
+
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, texturePosId);
-    shader.setInt("tPos", 0);
+    glBindTexture(GL_TEXTURE_2D, textureNormalId);
+    shader.setInt("tNorm", 0);
 
     glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, textureNormalId);
-    shader.setInt("tNorm", 1);
+    glBindTexture(GL_TEXTURE_2D, textureSceneId);
+    shader.setInt("tFrame", 1);
 
     glActiveTexture(GL_TEXTURE2);
-    glBindTexture(GL_TEXTURE_2D, textureSceneId);
-    shader.setInt("tFrame", 2);
+    glBindTexture(GL_TEXTURE_2D, textureMetallicId);
+    shader.setInt("tMetallic", 2);
 
     glActiveTexture(GL_TEXTURE3);
-    glBindTexture(GL_TEXTURE_2D, textureMetallicId);
-    shader.setInt("tMetallic", 3);
-
-    glActiveTexture(GL_TEXTURE4);
     glBindTexture(GL_TEXTURE_2D, textureDepthId);
-    shader.setInt("tDepth", 4);
+    shader.setInt("tDepth", 3);
 
     shader.setMat4("invView", glm::inverse(scene_m.getCamera().getViewMatrix()));
     shader.setMat4("view", scene_m.getCamera().getViewMatrix());
