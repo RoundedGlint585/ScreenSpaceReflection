@@ -54,12 +54,12 @@ void Renderer::initSceneRenderFramebuffer() {
     sceneRenderFramebufferId = 0;
     glGenFramebuffers(1, &sceneRenderFramebufferId);
     glBindFramebuffer(GL_FRAMEBUFFER, sceneRenderFramebufferId);
-    createEmptyTexture(textureSceneId, width_m, height_m);
+    createEmptyTexture(textureSceneId, width_m, height_m, GL_RGBA16);
 
     GLuint depthrenderbuffer;
     glGenRenderbuffers(1, &depthrenderbuffer);
     glBindRenderbuffer(GL_RENDERBUFFER, depthrenderbuffer);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width_m, height_m);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT32F, width_m, height_m);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthrenderbuffer);
 
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureSceneId, 0);
@@ -76,9 +76,9 @@ void Renderer::initPreRenderFramebuffer() {
     glGenFramebuffers(1, &preRenderFramebufferId);
     glBindFramebuffer(GL_FRAMEBUFFER, preRenderFramebufferId);
 
-    createEmptyTexture(textureNormalId, width_m, height_m);
-    createEmptyTexture(textureDepthId, width_m, height_m);
-    createEmptyTexture(textureMetallicId, width_m, height_m);
+    createEmptyTexture(textureNormalId, width_m, height_m, GL_RGBA16);
+    createEmptyTexture(textureDepthId, width_m, height_m, GL_RGBA16);
+    createEmptyTexture(textureMetallicId, width_m, height_m, GL_RGBA16F);
 
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureNormalId, 0);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, textureDepthId, 0);
@@ -193,26 +193,26 @@ void Renderer::renderGui() {
     ImGui::NewFrame();
     ImGui::Begin("Dissolve window");
     ImGui::SliderFloat("spec", &roughness, 0.0001, 1.f);//temp sol
-    ImGui::SliderFloat("metallic", &metallic, 0.0001, 1.f);
+    ImGui::SliderFloat("rayStep", &metallic, 0.0001, 0.25f);
     ImGui::SliderFloat("strength", &strength, 0.0001, 1.f);
     shaders_m[2].use();
     shaders_m[2].setFloat("spec", roughness);
-    shaders_m[2].setFloat("metallic", metallic);
+    shaders_m[2].setFloat("rayStep", metallic);
     shaders_m[2].setFloat("strength", strength);
     ImGui::End();
     ImGui::Begin("Texture check");
-    ImGui::Image((void *) (intptr_t) textureMetallicId, ImVec2(width_m, height_m), ImVec2(0, 1), ImVec2(1, 0));
+    ImGui::Image((void *) (intptr_t) textureSceneId, ImVec2(width_m, height_m), ImVec2(0, 1), ImVec2(1, 0));
     ImGui::End();
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
-void Renderer::createEmptyTexture(GLuint &textureId, size_t width, size_t height) {
+void Renderer::createEmptyTexture(GLuint &textureId, size_t width, size_t height, GLuint type = GL_RGBA16) {
     glGenTextures(1, &textureId);
 
     glBindTexture(GL_TEXTURE_2D, textureId);
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+    glTexImage2D(GL_TEXTURE_2D, 0, type, width, height, 0, GL_RGB, GL_FLOAT, nullptr);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);

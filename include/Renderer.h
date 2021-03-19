@@ -41,7 +41,7 @@ private:
     };
 
     void renderToTexture(Shader &shader, size_t width, size_t height);
-    void createEmptyTexture(GLuint &textureId, size_t width, size_t height);
+    void createEmptyTexture(GLuint &textureId, size_t width, size_t height, GLuint type);
     GLFWwindow *window_m;
     size_t width_m = 512, height_m = 512;
     Scene scene_m;

@@ -19,17 +19,22 @@ int main() {
     MaterialManager& manager = MaterialManager::getInstance();
     manager.addMaterial("Metal");
     manager.addMaterial("Wood");
-    auto [vertices1, indices1] = objParser::parseFile("objects/cube2.obj");
+    auto [vertices1, indices1] = objParser::parseFile("objects/teapot.obj");
     Mesh mesh1 = Mesh(indices1, vertices1);
     auto [vertices2, indices2] = objParser::parseFile("objects/ground.obj");
     Mesh mesh2 = Mesh(indices2, vertices2);
-    Camera camera({10,0, 5.}, {0, 0, 0}, {0.f, 1.f, 0});
+    auto [vertices3, indices3] = objParser::parseFile("objects/sphere.obj");
+    Mesh mesh3 = Mesh(indices3, vertices3);
+    Camera camera({-10,6, 5.}, {0, 0, 0}, {0.f, 1.f, 0});
     mesh1.setMaterial(manager.getMaterial("Wood"));
+    mesh3.setMaterial(manager.getMaterial("Wood"));
     mesh2.setMaterial(manager.getMaterial("Metal"));
     Scene scene;
     scene.setCamera(camera);
-    scene.addMesh(mesh2);
     scene.addMesh(mesh1);
+    scene.addMesh(mesh2);
+    scene.addMesh(mesh3);
+
     logger::INFO("Initiating main loop");
     renderer.setScene(scene);
 
