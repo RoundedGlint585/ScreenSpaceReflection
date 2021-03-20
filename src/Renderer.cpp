@@ -196,7 +196,7 @@ void Renderer::renderGui() {
     ImGui::SliderFloat("rayStep", &rayStep, 0.01, 0.5f);
     ImGui::SliderInt("iteration count", &ssrIterationCount, 10, 500);
     ImGui::Checkbox("Enable sampling", &isSamplingEnabled);
-    if(isSamplingEnabled){
+    if (isSamplingEnabled) {
         ImGui::SliderInt("sample count", &sampleCount, 1, 16);
         ImGui::SliderFloat("sampling coefficient", &samplingCoefficient, 0.f, 0.5f);
     }

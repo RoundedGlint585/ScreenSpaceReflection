@@ -21,12 +21,12 @@ uniform bool isSamplingEnabled = false;
 uniform float samplingCoefficient;
 
 float random (vec2 uv) {
-    return fract(sin(dot(uv,vec2(12.9898,78.233)))*43758.5453123);
+    return fract(sin(dot(uv, vec2(12.9898, 78.233)))*43758.5453123);
 }
 
-vec3 generatePositionFromDepth(vec2 texturePos, float depth){
+vec3 generatePositionFromDepth(vec2 texturePos, float depth) {
     vec4 ndc = vec4((texturePos - 0.5) * 2, depth, 1.f);
-    vec4 inversed = invProj * ndc; // going back from projected
+    vec4 inversed = invProj * ndc;// going back from projected
     inversed /= inversed.w;
     return inversed.xyz;
 }
@@ -40,13 +40,13 @@ vec2 generateProjectedPosition(vec3 pos){
 vec3 ScreenSpaceReflections(vec3 position, vec3 reflection) {
     vec3 step = rayStep * reflection;
     vec3 newPos = position + step;
-    for(int i = 0; i < iterationCount; i++) {
+    for (int i = 0; i < iterationCount; i++) {
         vec2 samplePosition = generateProjectedPosition(newPos);
         float currentDepth = abs(newPos.z);
         float sampledDepth = abs(generatePositionFromDepth(samplePosition, texture(textureDepth, samplePosition).x).z);
 
         float delta = abs(currentDepth - sampledDepth);
-        if(delta < distanceBias) {
+        if (delta < distanceBias) {
             return texture(textureFrame, samplePosition).xyz;
         }
         float directionSign = sign(currentDepth - sampledDepth);
@@ -61,19 +61,19 @@ void main(){
     vec3 position = generatePositionFromDepth(UV, texture(textureDepth, UV).x);
     vec4 normal = view * vec4(texture(textureNorm, UV).xyz, 0.0);
     float metallic = texture(textureMetallic, UV).r;
-    if(!enableSSR || metallic < 0.05){
+    if (!enableSSR || metallic < 0.05) {
         outColor = texture(textureFrame, UV);
-    }else {
+    } else {
         vec3 reflectionDirection = normalize(reflect(position, normalize(normal.xyz)));
-        if(isSamplingEnabled){
+        if (isSamplingEnabled) {
             vec3 firstBasis = normalize(cross(vec3(0.f, 0.f, 1.f), reflectionDirection));
             vec3 secondBasis = normalize(cross(reflectionDirection, firstBasis));
             vec4 resultingColor = vec4(0.f);
-            for (int i = 0; i < sampleCount; i++){
+            for (int i = 0; i < sampleCount; i++) {
                 vec2 coeffs = vec2(random(UV + vec2(0, i)) + random(UV + vec2(i, 0))) * samplingCoefficient;
                 vec3 reflectionDirectionRandomized = reflectionDirection + firstBasis * coeffs.x + secondBasis * coeffs.y;
                 vec3 tempColor = ScreenSpaceReflections(position, normalize(reflectionDirectionRandomized));
-                if (tempColor != vec3(0.f)){
+                if (tempColor != vec3(0.f)) {
                     resultingColor += vec4(tempColor, 1.f);
                 }
             }
@@ -84,9 +84,9 @@ void main(){
                 resultingColor /= resultingColor.w;
                 outColor = vec4(resultingColor.xyz, 1.f);
             }
-        }else{
+        } else {
             outColor = vec4(ScreenSpaceReflections(position, normalize(reflectionDirection)), 1.f);
-            if(outColor.xyz == vec3(0.f)){
+            if (outColor.xyz == vec3(0.f)){
                 outColor = texture(textureFrame, UV);
             }
         }
