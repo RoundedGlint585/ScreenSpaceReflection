@@ -10,7 +10,7 @@
 #include <cstddef>
 #include "Shader.h"
 #include "MaterialManager.h"
-//now by default we will have normal, roughness, metallic cass
+//now by default we will have normal, comparingBias, rayStep cass
 class Mesh {
 public:
     struct Vertex {

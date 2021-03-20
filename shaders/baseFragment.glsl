@@ -10,7 +10,7 @@ uniform vec3 camPos;
 
 //object textures
 uniform sampler2D textureBaseColor;
-uniform sampler2D textureNormal; //todo
+uniform sampler2D textureNormal; // todo: nor using at all right now, to much to work with
 uniform sampler2D textureMetallic;
 uniform sampler2D textureRoughness;
 
@@ -77,5 +77,5 @@ void main() {
     color = pow(color, vec3(1.0/2.0));
 
     FragColor = vec4(color, 1.0);
-    FragColor = texture(textureBaseColor, texCoord);
+    FragColor = texture(textureBaseColor, texCoord); // removed brdf smtm gives very strange results
 }

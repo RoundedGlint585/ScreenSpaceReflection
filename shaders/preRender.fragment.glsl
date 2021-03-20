@@ -3,7 +3,6 @@ layout(location = 0) out vec4 normalColor;
 layout(location = 1) out vec4 depthColor;
 layout(location = 2) out vec4 metallicColor;
 
-in vec4 pos;
 in vec4 normal;
 in vec2 texCoord;
 

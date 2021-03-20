@@ -8,7 +8,7 @@ void Scene::render(const Shader &shader) {
     shader.use();
     shader.setMat4("view", camera_m.getViewMatrix() );
     shader.setVec3("lightColor", {1.0f, 1.0f, 1.0f});
-    shader.setVec3("lightPosition", {10,5, 5.});
+    shader.setVec3("lightPosition", {5,5, 5.});
     shader.setVec3("camPos", camera_m.getCameraPosition());
     for(auto &mesh: meshes_m){
         mesh.draw(shader);

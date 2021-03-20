@@ -192,13 +192,17 @@ void Renderer::renderGui() {
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
     ImGui::Begin("Dissolve window");
-    ImGui::SliderFloat("spec", &roughness, 0.0001, 1.f);//temp sol
-    ImGui::SliderFloat("rayStep", &metallic, 0.0001, 0.25f);
+    ImGui::SliderFloat("spec", &comparingBias, 0.0001, 1.f);//temp sol
+    ImGui::SliderFloat("rayStep", &rayStep, 0.01, 0.5f);
     ImGui::SliderFloat("strength", &strength, 0.0001, 1.f);
+    ImGui::SliderInt("iterationCount", &ssrIterationCount, 10, 100);
+    ImGui::Checkbox("Enable SSR", &isSSREnabled);
     shaders_m[2].use();
-    shaders_m[2].setFloat("spec", roughness);
-    shaders_m[2].setFloat("rayStep", metallic);
+    shaders_m[2].setFloat("spec", comparingBias);
+    shaders_m[2].setFloat("rayStep", rayStep);
     shaders_m[2].setFloat("strength", strength);
+    shaders_m[2].setBool("enableSSR", isSSREnabled);
+    shaders_m[2].setInt("iterationCount", ssrIterationCount);
     ImGui::End();
     ImGui::Begin("Texture check");
     ImGui::Image((void *) (intptr_t) textureSceneId, ImVec2(width_m, height_m), ImVec2(0, 1), ImVec2(1, 0));
