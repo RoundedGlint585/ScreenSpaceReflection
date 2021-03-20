@@ -10,6 +10,7 @@ uniform mat4 invProj;
 
 uniform float rayStep = 0.2f;
 uniform int iterationCount = 100;
+uniform float distanceBias = 0.05f;
 
 vec3 generatePositionFromDepth(vec2 texturePos, float depth){
     vec4 ndc = vec4((texturePos - 0.5) * 2, depth, 1.f);
@@ -45,10 +46,9 @@ void main()
 // Screen space reflections
 vec3 ScreenSpaceReflections(vec3 position, vec3 reflection) {
     vec3 step = rayStep * reflection;
-    vec3 newPosition = position + step;
-
+    vec3 newPos = position + step;
     for(int i = 0; i < iterationCount; i++) {
-        vec4 newViewPos = vec4(newPosition, 1.0);
+        vec4 newViewPos = vec4(newPos, 1.0);
         vec4 samplePosition = proj * newViewPos;
         samplePosition.xy = (samplePosition.xy / samplePosition.w) * 0.5 + 0.5;
 
@@ -56,12 +56,12 @@ vec3 ScreenSpaceReflections(vec3 position, vec3 reflection) {
         float sampledDepth = abs(generatePositionFromDepth(samplePosition.xy, texture(tDepth, samplePosition.xy).x).z);
 
         float delta = abs(currentDepth - sampledDepth);
-        if(delta < 0.05f) {
+        if(delta < distanceBias) {
             return texture(tFrame, samplePosition.xy).xyz;
         }
 
         step *= 1.0 - 0.5 * max(sign(currentDepth - sampledDepth), 0.0);
-        newPosition += step * (sign(sampledDepth - currentDepth) + 0.000001);
+        newPos += step * (sign(sampledDepth - currentDepth) + 0.000001);
     }
     return vec3(0.0);
 }
