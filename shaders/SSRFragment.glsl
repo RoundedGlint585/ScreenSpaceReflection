@@ -11,12 +11,20 @@ uniform mat4 invProj;
 uniform float rayStep = 0.2f;
 uniform int iterationCount = 100;
 uniform float distanceBias = 0.05f;
+uniform bool enableSSR = true;
 
 vec3 generatePositionFromDepth(vec2 texturePos, float depth){
     vec4 ndc = vec4((texturePos - 0.5) * 2, depth, 1.f);
     vec4 inversed = invProj * ndc; // going back from projected
     inversed /= inversed.w;
     return inversed.xyz;
+}
+
+vec2 generateProjectedPosition(vec3 pos){
+    vec4 newViewPos = vec4(pos, 1.0);
+    vec4 samplePosition = proj * newViewPos;
+    samplePosition.xy = (samplePosition.xy / samplePosition.w) * 0.5 + 0.5;
+    return samplePosition.xy;
 }
 
 in vec2 UV;
@@ -31,7 +39,7 @@ void main()
     vec3 position = generatePositionFromDepth(UV, texture(tDepth, UV).x);
     vec4 normal = view * vec4(texture(tNorm, UV).xyz, 0.0);
     float metallic = texture(tMetallic, UV).r;
-    if(metallic < 0.1){
+    if(!enableSSR || metallic < 0.1){
         outColor = texture(tFrame, UV);
     }else {
         vec3 reflectionDirection = normalize(reflect(position, normalize(normal.xyz)));
@@ -48,20 +56,18 @@ vec3 ScreenSpaceReflections(vec3 position, vec3 reflection) {
     vec3 step = rayStep * reflection;
     vec3 newPos = position + step;
     for(int i = 0; i < iterationCount; i++) {
-        vec4 newViewPos = vec4(newPos, 1.0);
-        vec4 samplePosition = proj * newViewPos;
-        samplePosition.xy = (samplePosition.xy / samplePosition.w) * 0.5 + 0.5;
-
-        float currentDepth = abs(newViewPos.z);
-        float sampledDepth = abs(generatePositionFromDepth(samplePosition.xy, texture(tDepth, samplePosition.xy).x).z);
+        vec2 samplePosition = generateProjectedPosition(newPos);
+        float currentDepth = abs(newPos.z);
+        float sampledDepth = abs(generatePositionFromDepth(samplePosition, texture(tDepth, samplePosition).x).z);
 
         float delta = abs(currentDepth - sampledDepth);
         if(delta < distanceBias) {
-            return texture(tFrame, samplePosition.xy).xyz;
+            return texture(tFrame, samplePosition).xyz;
         }
-
-        step *= 1.0 - 0.5 * max(sign(currentDepth - sampledDepth), 0.0);
-        newPos += step * (sign(sampledDepth - currentDepth) + 0.000001);
+        float directionSign = sign(currentDepth - sampledDepth);
+        //this is literally binary search
+        step = step * (1.0 - 0.15 * max(directionSign, 0.0));
+        newPos = newPos + step * (-directionSign);
     }
     return vec3(0.0);
 }

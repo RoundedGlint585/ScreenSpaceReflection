@@ -195,7 +195,7 @@ void Renderer::renderGui() {
     ImGui::SliderFloat("spec", &comparingBias, 0.0001, 1.f);//temp sol
     ImGui::SliderFloat("rayStep", &rayStep, 0.01, 0.5f);
     ImGui::SliderFloat("strength", &strength, 0.0001, 1.f);
-    ImGui::SliderInt("iterationCount", &ssrIterationCount, 10, 100);
+    ImGui::SliderInt("iterationCount", &ssrIterationCount, 10, 500);
     ImGui::Checkbox("Enable SSR", &isSSREnabled);
     shaders_m[2].use();
     shaders_m[2].setFloat("spec", comparingBias);
