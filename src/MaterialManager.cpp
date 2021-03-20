@@ -1,10 +1,10 @@
 //
 // Created by roundedglint585 on 3/15/21.
 //
-
 #include "../include/MaterialManager.h"
 #include "../include/Logger.h"
 #include "stb_image.h"
+
 MaterialManager &MaterialManager::getInstance() {
     static MaterialManager manager;
     return manager;
@@ -19,7 +19,7 @@ Material& MaterialManager::addMaterial(const std::string &name) {
     stbi_set_flip_vertically_on_load(true);
     for(size_t i = 0; i < texturesName.size(); i++){
         std::string path = "textures/" + name + "/" + texturesName[i];
-        std::cout << path << std::endl;
+        logger::INFO("Loading " + name + " material: " + texturesName[i]);
         data = stbi_load(path.c_str(), &width, &height, &nrChannels, 0);
         if(!data){
             logger::ERROR("texture with name: " + path + " was not loaded");

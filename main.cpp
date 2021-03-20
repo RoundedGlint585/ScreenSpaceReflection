@@ -10,16 +10,17 @@
 #include "include/Scene.h"
 #include "include/Renderer.h"
 #include "include/Logger.h"
-#include "include/Shader.h"
 
 int main() {
     logger::INFO("Loading shaders and data");
     Renderer renderer;
     renderer.init(800, 600);
+
     MaterialManager& manager = MaterialManager::getInstance();
     manager.addMaterial("Metal");
     manager.addMaterial("Wood");
-    auto [vertices1, indices1] = objParser::parseFile("objects/teapot.obj");
+
+    auto [vertices1, indices1] = objParser::parseFile("objects/cube2.obj");
     Mesh mesh1 = Mesh(indices1, vertices1);
     auto [vertices2, indices2] = objParser::parseFile("objects/ground.obj");
     Mesh mesh2 = Mesh(indices2, vertices2);
@@ -29,6 +30,7 @@ int main() {
     mesh1.setMaterial(manager.getMaterial("Wood"));
     mesh3.setMaterial(manager.getMaterial("Wood"));
     mesh2.setMaterial(manager.getMaterial("Metal"));
+
     Scene scene;
     scene.setCamera(camera);
     scene.addMesh(mesh1);
@@ -37,7 +39,6 @@ int main() {
 
     logger::INFO("Initiating main loop");
     renderer.setScene(scene);
-
     logger::INFO("Starting main loop");
     renderer.runMainLoop();
     logger::INFO("Exiting");

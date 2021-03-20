@@ -47,12 +47,13 @@ private:
     Scene scene_m;
     std::vector<Shader> shaders_m;
     glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float) width_m / (float) height_m, 0.1f, 100.0f);
-    float comparingBias, rayStep = 0.1, strength;
     GLuint textureNormalId, textureDepthId, textureMetallicId; //PreRender
     GLuint textureSceneId; // SceneRender
     GLuint preRenderFramebufferId, sceneRenderFramebufferId;
     GLuint postProcessVAO;
+    //ssr shader variables
     bool isSSREnabled;
+    float distanceBias = 0.03, rayStep = 0.1;
     int ssrIterationCount = 100;
 
 

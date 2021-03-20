@@ -163,21 +163,20 @@ void Renderer::postEffectScene(Shader &shader) {
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, textureNormalId);
-    shader.setInt("tNorm", 0);
+    shader.setInt("textureNorm", 0);
 
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, textureSceneId);
-    shader.setInt("tFrame", 1);
+    shader.setInt("textureFrame", 1);
 
     glActiveTexture(GL_TEXTURE2);
     glBindTexture(GL_TEXTURE_2D, textureMetallicId);
-    shader.setInt("tMetallic", 2);
+    shader.setInt("textureMetallic", 2);
 
     glActiveTexture(GL_TEXTURE3);
     glBindTexture(GL_TEXTURE_2D, textureDepthId);
-    shader.setInt("tDepth", 3);
+    shader.setInt("textureDepth", 3);
 
-    shader.setMat4("invView", glm::inverse(scene_m.getCamera().getViewMatrix()));
     shader.setMat4("view", scene_m.getCamera().getViewMatrix());
     shader.setMat4("proj", projection);
     shader.setMat4("invProj", glm::inverse(projection));
@@ -192,15 +191,13 @@ void Renderer::renderGui() {
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
     ImGui::Begin("Dissolve window");
-    ImGui::SliderFloat("spec", &comparingBias, 0.0001, 1.f);//temp sol
+    ImGui::SliderFloat("distance bias", &distanceBias, 0.0001, 0.15f);//temp sol
     ImGui::SliderFloat("rayStep", &rayStep, 0.01, 0.5f);
-    ImGui::SliderFloat("strength", &strength, 0.0001, 1.f);
-    ImGui::SliderInt("iterationCount", &ssrIterationCount, 10, 500);
+    ImGui::SliderInt("iteration count", &ssrIterationCount, 10, 500);
     ImGui::Checkbox("Enable SSR", &isSSREnabled);
     shaders_m[2].use();
-    shaders_m[2].setFloat("spec", comparingBias);
+    shaders_m[2].setFloat("distanceBias", distanceBias);
     shaders_m[2].setFloat("rayStep", rayStep);
-    shaders_m[2].setFloat("strength", strength);
     shaders_m[2].setBool("enableSSR", isSSREnabled);
     shaders_m[2].setInt("iterationCount", ssrIterationCount);
     ImGui::End();
