@@ -191,15 +191,24 @@ void Renderer::renderGui() {
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
     ImGui::Begin("Dissolve window");
+    ImGui::Checkbox("Enable SSR", &isSSREnabled);
     ImGui::SliderFloat("distance bias", &distanceBias, 0.0001, 0.15f);//temp sol
     ImGui::SliderFloat("rayStep", &rayStep, 0.01, 0.5f);
     ImGui::SliderInt("iteration count", &ssrIterationCount, 10, 500);
-    ImGui::Checkbox("Enable SSR", &isSSREnabled);
+    ImGui::Checkbox("Enable sampling", &isSamplingEnabled);
+    if(isSamplingEnabled){
+        ImGui::SliderInt("sample count", &sampleCount, 1, 16);
+        ImGui::SliderFloat("sampling coefficient", &samplingCoefficient, 0.f, 0.5f);
+    }
+
     shaders_m[2].use();
     shaders_m[2].setFloat("distanceBias", distanceBias);
     shaders_m[2].setFloat("rayStep", rayStep);
     shaders_m[2].setBool("enableSSR", isSSREnabled);
     shaders_m[2].setInt("iterationCount", ssrIterationCount);
+    shaders_m[2].setBool("isSamplingEnabled", isSamplingEnabled);
+    shaders_m[2].setInt("sampleCount", sampleCount);
+    shaders_m[2].setFloat("samplingCoefficient", samplingCoefficient);
     ImGui::End();
     ImGui::Begin("Texture check");
     ImGui::Image((void *) (intptr_t) textureSceneId, ImVec2(width_m, height_m), ImVec2(0, 1), ImVec2(1, 0));

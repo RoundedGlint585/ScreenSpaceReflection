@@ -20,7 +20,7 @@ int main() {
     manager.addMaterial("Metal");
     manager.addMaterial("Wood");
 
-    auto [vertices1, indices1] = objParser::parseFile("objects/cube2.obj");
+    auto [vertices1, indices1] = objParser::parseFile("objects/teapot.obj");
     Mesh mesh1 = Mesh(indices1, vertices1);
     auto [vertices2, indices2] = objParser::parseFile("objects/ground.obj");
     Mesh mesh2 = Mesh(indices2, vertices2);

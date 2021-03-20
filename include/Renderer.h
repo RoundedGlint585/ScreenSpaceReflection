@@ -55,6 +55,10 @@ private:
     bool isSSREnabled;
     float distanceBias = 0.03, rayStep = 0.1;
     int ssrIterationCount = 100;
+    //
+    bool isSamplingEnabled = false;
+    int sampleCount = 4;
+    float samplingCoefficient = 0.1;
 
 
     void loadShaders();
