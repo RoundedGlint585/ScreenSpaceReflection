@@ -14,7 +14,7 @@
 int main() {
     logger::INFO("Loading shaders and data");
     Renderer renderer;
-    renderer.init(800, 600);
+    renderer.init(1000, 1000);
 
     MaterialManager& manager = MaterialManager::getInstance();
     manager.addMaterial("Metal");
@@ -28,7 +28,7 @@ int main() {
     Mesh mesh3 = Mesh(indices3, vertices3);
     auto [vertices4, indices4] = objParser::parseFile("objects/cube2.obj");
     Mesh mesh4 = Mesh(indices4, vertices4);
-    Camera camera({-10,6, 5.}, {0, 0, 0}, {0.f, 1.f, 0});
+    Camera camera({-12,10, 8}, {0, 0, 0}, {0.f, 1.f, 0});
     mesh1.setMaterial(manager.getMaterial("Wood"));
     mesh3.setMaterial(manager.getMaterial("Wood"));
     mesh4.setMaterial(manager.getMaterial("Wood"));

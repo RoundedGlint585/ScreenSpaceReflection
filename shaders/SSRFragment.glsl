@@ -1,4 +1,4 @@
-#version 330 core
+#version 420 core
 
 in vec2 UV;
 out vec4 outColor;
@@ -38,26 +38,26 @@ vec2 generateProjectedPosition(vec3 pos){
     return samplePosition.xy;
 }
 
-vec3 ScreenSpaceReflections(vec3 position, vec3 reflection) {
+vec3 SSR(vec3 position, vec3 reflection) {
     vec3 step = rayStep * reflection;
-    vec3 newPos = position + step;
+    vec3 marchingPosition = position + step;
     for (int i = 0; i < iterationCount; i++) {
-        vec2 samplePosition = generateProjectedPosition(newPos);
-        float currentDepth = abs(newPos.z);
-        float sampledDepth = abs(generatePositionFromDepth(samplePosition, texture(textureDepth, samplePosition).x).z);
+        vec2 screenPosition = generateProjectedPosition(marchingPosition);
+        float depthFromMarching = abs(marchingPosition.z);
+        float depthFromScreen = abs(generatePositionFromDepth(screenPosition, texture(textureDepth, screenPosition).x).z);
 
-        float delta = abs(currentDepth - sampledDepth);
+        float delta = abs(depthFromMarching - depthFromScreen);
         if (delta < distanceBias) {
-            return texture(textureFrame, samplePosition).xyz;
+            return texture(textureFrame, screenPosition).xyz;
         }
         if(isAdaptiveStepEnabled){
-            float directionSign = sign(currentDepth - sampledDepth);
+            float directionSign = sign(depthFromMarching - depthFromScreen);
             //this is sort of adapting step, should prevent lining reflection by doing sort of iterative converging
             //some implementation doing it by binary search, but I found this idea more cheaty and way easier to implement
             step = step * (1.0 - rayStep * max(directionSign, 0.0));
-            newPos = newPos + step * (-directionSign);
+            marchingPosition = marchingPosition + step * (-directionSign);
         }else{
-            newPos = newPos + step;
+            marchingPosition = marchingPosition + step;
         }
     }
     return vec3(0.0);
@@ -78,20 +78,19 @@ void main(){
             for (int i = 0; i < sampleCount; i++) {
                 vec2 coeffs = vec2(random(UV + vec2(0, i)) + random(UV + vec2(i, 0))) * samplingCoefficient;
                 vec3 reflectionDirectionRandomized = reflectionDirection + firstBasis * coeffs.x + secondBasis * coeffs.y;
-                vec3 tempColor = ScreenSpaceReflections(position, normalize(reflectionDirectionRandomized));
+                vec3 tempColor = SSR(position, normalize(reflectionDirectionRandomized));
                 if (tempColor != vec3(0.f)) {
                     resultingColor += vec4(tempColor, 1.f);
                 }
             }
-
             if (resultingColor.w == 0){
                 outColor = texture(textureFrame, UV);
             } else {
-                resultingColor /= resultingColor.w; //maybe it is good to add sort of weighting for color
+                resultingColor /= resultingColor.w;
                 outColor = vec4(resultingColor.xyz, 1.f);
             }
         } else {
-            outColor = vec4(ScreenSpaceReflections(position, normalize(reflectionDirection)), 1.f);
+            outColor = vec4(SSR(position, normalize(reflectionDirection)), 1.f);
             if (outColor.xyz == vec3(0.f)){
                 outColor = texture(textureFrame, UV);
             }
