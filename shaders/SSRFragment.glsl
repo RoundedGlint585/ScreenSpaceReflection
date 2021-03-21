@@ -43,15 +43,13 @@ vec3 SSR(vec3 position, vec3 reflection) {
     vec3 marchingPosition = position + step;
     for (int i = 0; i < iterationCount; i++) {
         vec2 screenPosition = generateProjectedPosition(marchingPosition);
-        float depthFromMarching = abs(marchingPosition.z);
         float depthFromScreen = abs(generatePositionFromDepth(screenPosition, texture(textureDepth, screenPosition).x).z);
-
-        float delta = abs(depthFromMarching - depthFromScreen);
+        float delta = abs(abs(marchingPosition.z) - depthFromScreen);
         if (delta < distanceBias) {
             return texture(textureFrame, screenPosition).xyz;
         }
         if(isAdaptiveStepEnabled){
-            float directionSign = sign(depthFromMarching - depthFromScreen);
+            float directionSign = sign(abs(marchingPosition.z) - depthFromScreen);
             //this is sort of adapting step, should prevent lining reflection by doing sort of iterative converging
             //some implementation doing it by binary search, but I found this idea more cheaty and way easier to implement
             step = step * (1.0 - rayStep * max(directionSign, 0.0));
