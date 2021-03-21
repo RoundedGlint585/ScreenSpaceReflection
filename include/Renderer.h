@@ -10,6 +10,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <cstddef>
+#include "Timer.h"
 using std::size_t;
 class Renderer {
 public:
@@ -52,15 +53,23 @@ private:
     GLuint preRenderFramebufferId, sceneRenderFramebufferId;
     GLuint postProcessVAO;
     //ssr shader variables
-    bool isSSREnabled;
+    bool isSSREnabled = true;
     float distanceBias = 0.03, rayStep = 0.1;
     int ssrIterationCount = 100;
-    //
+    // sampling settings
     bool isSamplingEnabled = false;
+    bool isAdaptiveStepEnabled = true;
     int sampleCount = 4;
-    float samplingCoefficient = 0.1;
+    float samplingCoefficient = 0.01;
+    //texture checker
+    std::array<int, 3> textureType;
+    int selectedTexture;
 
-
+    timer::Timer timer;
+    float renderingTime;
+    float timeAccumulated;
+    int accumulationWindow = 100;
+    int accumulatedFrames = 0;
     void loadShaders();
 
     void initPreRenderFramebuffer();

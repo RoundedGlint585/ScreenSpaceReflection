@@ -18,10 +18,11 @@ uniform float distanceBias = 0.05f;
 uniform bool enableSSR = false;
 uniform int sampleCount = 4;
 uniform bool isSamplingEnabled = false;
+uniform bool isAdaptiveStepEnabled = true;
 uniform float samplingCoefficient;
 
 float random (vec2 uv) {
-    return fract(sin(dot(uv, vec2(12.9898, 78.233)))*43758.5453123);
+    return fract(sin(dot(uv, vec2(12.9898, 78.233))) * 43758.5453123); //simple random function
 }
 
 vec3 generatePositionFromDepth(vec2 texturePos, float depth) {
@@ -49,10 +50,15 @@ vec3 ScreenSpaceReflections(vec3 position, vec3 reflection) {
         if (delta < distanceBias) {
             return texture(textureFrame, samplePosition).xyz;
         }
-        float directionSign = sign(currentDepth - sampledDepth);
-        //this is sort of adapting step, should prevent lining reflection
-        step = step * (1.0 - rayStep * max(directionSign, 0.0));
-        newPos = newPos + step * (-directionSign);
+        if(isAdaptiveStepEnabled){
+            float directionSign = sign(currentDepth - sampledDepth);
+            //this is sort of adapting step, should prevent lining reflection by doing sort of iterative converging
+            //some implementation doing it by binary search, but I found this idea more cheaty and way easier to implement
+            step = step * (1.0 - rayStep * max(directionSign, 0.0));
+            newPos = newPos + step * (-directionSign);
+        }else{
+            newPos = newPos + step;
+        }
     }
     return vec3(0.0);
 }
@@ -61,7 +67,7 @@ void main(){
     vec3 position = generatePositionFromDepth(UV, texture(textureDepth, UV).x);
     vec4 normal = view * vec4(texture(textureNorm, UV).xyz, 0.0);
     float metallic = texture(textureMetallic, UV).r;
-    if (!enableSSR || metallic < 0.05) {
+    if (!enableSSR || metallic < 0.01) {
         outColor = texture(textureFrame, UV);
     } else {
         vec3 reflectionDirection = normalize(reflect(position, normalize(normal.xyz)));
@@ -81,7 +87,7 @@ void main(){
             if (resultingColor.w == 0){
                 outColor = texture(textureFrame, UV);
             } else {
-                resultingColor /= resultingColor.w;
+                resultingColor /= resultingColor.w; //maybe it is good to add sort of weighting for color
                 outColor = vec4(resultingColor.xyz, 1.f);
             }
         } else {

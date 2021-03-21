@@ -127,12 +127,21 @@ void Renderer::renderScene(Shader &shader, const glm::vec3 &backgroundColor) {
 
 void Renderer::runMainLoop() {
     while (!glfwWindowShouldClose(window_m)) {
+        timer.start();
         renderToTexture(shaders_m[PreRender_Shader], width_m, height_m);
         renderSceneToTexture(shaders_m[Base_Shader]);
         postEffectScene(shaders_m[SSR_Shader]);
         renderGui();
         glfwSwapBuffers(window_m);
         glfwPollEvents();
+        renderingTime = timer.stop<std::chrono::milliseconds>();
+        if(accumulatedFrames == accumulationWindow){
+            accumulatedFrames = 0;
+            timeAccumulated = 0;
+        }else{
+            accumulatedFrames++;
+            timeAccumulated += renderingTime;
+        }
     }
 }
 
@@ -190,11 +199,14 @@ void Renderer::renderGui() {
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
-    ImGui::Begin("Dissolve window");
+    ImGui::Begin("SSR settings");
+    ImGui::Text("Time for last frame: %f", renderingTime);
+    ImGui::Text("Mean time for last %d frames: %f", accumulationWindow, timeAccumulated / accumulatedFrames);
     ImGui::Checkbox("Enable SSR", &isSSREnabled);
     ImGui::SliderFloat("distance bias", &distanceBias, 0.0001, 0.15f);//temp sol
     ImGui::SliderFloat("rayStep", &rayStep, 0.01, 0.5f);
     ImGui::SliderInt("iteration count", &ssrIterationCount, 10, 500);
+    ImGui::Checkbox("Enable adaptive step", &isAdaptiveStepEnabled);
     ImGui::Checkbox("Enable sampling", &isSamplingEnabled);
     if (isSamplingEnabled) {
         ImGui::SliderInt("sample count", &sampleCount, 1, 16);
@@ -209,6 +221,7 @@ void Renderer::renderGui() {
     shaders_m[2].setBool("isSamplingEnabled", isSamplingEnabled);
     shaders_m[2].setInt("sampleCount", sampleCount);
     shaders_m[2].setFloat("samplingCoefficient", samplingCoefficient);
+    shaders_m[2].setFloat("isAdaptiveStepEnabled", isAdaptiveStepEnabled);
     ImGui::End();
     ImGui::Begin("Texture check");
     ImGui::Image((void *) (intptr_t) textureSceneId, ImVec2(width_m, height_m), ImVec2(0, 1), ImVec2(1, 0));

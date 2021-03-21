@@ -7,6 +7,9 @@ in vec4 normal;
 in vec2 texCoord;
 
 uniform sampler2D textureMetallic;
+uniform float zNear = 0.1;
+uniform float zFar = 500.0;
+
 
 void main() {
     normalColor = normal;
