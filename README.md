@@ -1,4 +1,4 @@
-# Screen space reglection
+# Screen space reflection
 
 This code repository is an implementation of screen space reflection technique on modern OpenGL;
 
