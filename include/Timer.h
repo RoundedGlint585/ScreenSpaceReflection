@@ -32,6 +32,7 @@ float timer::Timer::stop() {
         return std::chrono::duration_cast<T>(std::chrono::high_resolution_clock::now() - time).count();
     }else{
         logger::WARNING("Timer not started");
+        return 0.f;
     }
 }
 
