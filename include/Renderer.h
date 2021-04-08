@@ -54,12 +54,15 @@ private:
     GLuint preRenderFramebufferId, sceneRenderFramebufferId;
     GLuint postProcessVAO;
     //ssr shader variables
+    bool debugDraw = false;
     bool isSSREnabled = true;
     float distanceBias = 0.03, rayStep = 0.1;
     int ssrIterationCount = 100;
     // sampling settings
-    bool isSamplingEnabled = false;
     bool isAdaptiveStepEnabled = true;
+    bool isBinarySearchEnabled = true;
+    bool isExponentialStepEnabled = false;
+    bool isSamplingEnabled = false;
     int sampleCount = 4;
     float samplingCoefficient = 0.01;
     //texture checker

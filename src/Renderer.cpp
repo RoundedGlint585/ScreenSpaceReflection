@@ -11,6 +11,7 @@
 #include <imgui/imgui_impl_glfw.h>
 #include <imgui/imgui_impl_opengl3.h>
 
+
 void Renderer::init(size_t width, size_t height) {
     width_m = width;
     height_m = height;
@@ -214,8 +215,18 @@ void Renderer::renderGui() {
     ImGui::SliderFloat("distance bias", &distanceBias, 0.0001, 0.5f);//temp sol
     ImGui::SliderFloat("rayStep", &rayStep, 0.01, 1.0f);
     ImGui::SliderInt("iteration count", &ssrIterationCount, 1, 500);
-    ImGui::Checkbox("Enable adaptive step", &isAdaptiveStepEnabled);
+    ImGui::Checkbox("Enable Exponential step", &isExponentialStepEnabled);
+
+    // making AdaptiveStep and binary step mutually exclusive
+    bool AdaptiveStepEnabled = isAdaptiveStepEnabled;
+    ImGui::Checkbox("Enable adaptive step", &AdaptiveStepEnabled);
+    ImGui::Checkbox("Enable binary step", &isBinarySearchEnabled);
+    if (AdaptiveStepEnabled && !isAdaptiveStepEnabled) isBinarySearchEnabled = false;
+    isAdaptiveStepEnabled = AdaptiveStepEnabled;
+    if (isBinarySearchEnabled) isAdaptiveStepEnabled = false;
+
     ImGui::Checkbox("Enable sampling", &isSamplingEnabled);
+    ImGui::Checkbox("debugDraw", &debugDraw);
     if (isSamplingEnabled) {
         ImGui::SliderInt("sample count", &sampleCount, 1, 16);
         ImGui::SliderFloat("sampling coefficient", &samplingCoefficient, 0.f, 0.5f);
@@ -231,7 +242,10 @@ void Renderer::renderGui() {
     shaders_m[2].setBool("isSamplingEnabled", isSamplingEnabled);
     shaders_m[2].setInt("sampleCount", sampleCount);
     shaders_m[2].setFloat("samplingCoefficient", samplingCoefficient);
-    shaders_m[2].setFloat("isAdaptiveStepEnabled", isAdaptiveStepEnabled);
+    shaders_m[2].setBool("isExponentialStepEnabled", isExponentialStepEnabled);
+    shaders_m[2].setBool("isAdaptiveStepEnabled", isAdaptiveStepEnabled);
+    shaders_m[2].setBool("isBinarySearchEnabled", isBinarySearchEnabled);
+    shaders_m[2].setBool("debugDraw", debugDraw);
     ImGui::End();
     ImGui::Begin("scene Texture");
     ImGui::Image((void *) (intptr_t) textureSceneId, ImVec2(width_m, height_m), ImVec2(0, 1), ImVec2(1, 0));
