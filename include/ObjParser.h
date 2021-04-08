@@ -13,6 +13,7 @@
 #include <vector>
 #include <tuple>
 #include <cstdint>
+#include <array>
 #include <unordered_map>
 #include <glm/gtx/hash.hpp>
 #include "Mesh.h"
@@ -99,7 +100,7 @@ namespace objParser {
                                 {vertices[parsedVertices[index] - 1], normals[parsedNormals[index] - 1], textures[parsedTextures[index]-1]});
                         if (possibleIndex == fromDataToIndex.end()) {
                             fromDataToIndex.insert({{vertices[parsedVertices[index] - 1], normals[parsedNormals[index] - 1], textures[parsedTextures[index]-1]},
-                                                    preMeshVertex.size()});
+                                                    (uint32_t)preMeshVertex.size()});
                             indices.emplace_back(preMeshVertex.size());
                             preMeshVertex.emplace_back(vertices[parsedVertices[index] - 1], normals[parsedNormals[index] - 1], textures[parsedTextures[index]-1]);
 

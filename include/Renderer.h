@@ -10,6 +10,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <cstddef>
+#include <array>
 #include "Timer.h"
 using std::size_t;
 class Renderer {
