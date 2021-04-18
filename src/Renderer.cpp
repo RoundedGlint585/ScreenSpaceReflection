@@ -3,6 +3,8 @@
 //
 
 #include <GL/glew.h>
+//#include <glad/glad.h>
+//#define IMGUI_IMPL_OPENGL_LOADER_GLAD
 #include "../include/Renderer.h"
 #include "../include/Logger.h"
 #include <imgui/imgui.h>
@@ -18,6 +20,11 @@ void Renderer::init(size_t width, size_t height) {
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     window_m = glfwCreateWindow(width_m, height_m, "Object", nullptr, nullptr);
     glfwMakeContextCurrent(window_m);
+    //if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+    //{
+    //    logger::ERROR("Failed to initialize GLAD");
+    //    return;
+    //}
     glViewport(0, 0, width_m, height_m);
     glewInit();
 
@@ -198,21 +205,34 @@ void Renderer::postEffectScene(Shader &shader) {
 void Renderer::renderGui() {
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
     ImGui::Begin("SSR settings");
     ImGui::Text("Time for last frame: %f", renderingTime);
     ImGui::Text("Mean time for last %d frames: %f", accumulationWindow, timeAccumulated / accumulatedFrames);
     ImGui::Checkbox("Enable SSR", &isSSREnabled);
-    ImGui::SliderFloat("distance bias", &distanceBias, 0.0001, 0.15f);//temp sol
-    ImGui::SliderFloat("rayStep", &rayStep, 0.01, 0.5f);
-    ImGui::SliderInt("iteration count", &ssrIterationCount, 10, 500);
-    ImGui::Checkbox("Enable adaptive step", &isAdaptiveStepEnabled);
+    ImGui::SliderFloat("distance bias", &distanceBias, 0.0001, 0.5f);//temp sol
+    ImGui::SliderFloat("rayStep", &rayStep, 0.01, 1.0f);
+    ImGui::SliderInt("iteration count", &ssrIterationCount, 1, 500);
+    ImGui::Checkbox("Enable Exponential step", &isExponentialStepEnabled);
+
+    // making AdaptiveStep and binary step mutually exclusive
+    bool AdaptiveStepEnabled = isAdaptiveStepEnabled;
+    ImGui::Checkbox("Enable adaptive step", &AdaptiveStepEnabled);
+    ImGui::Checkbox("Enable binary step", &isBinarySearchEnabled);
+    if (AdaptiveStepEnabled && !isAdaptiveStepEnabled) isBinarySearchEnabled = false;
+    isAdaptiveStepEnabled = AdaptiveStepEnabled;
+    if (isBinarySearchEnabled) isAdaptiveStepEnabled = false;
+
     ImGui::Checkbox("Enable sampling", &isSamplingEnabled);
+    ImGui::Checkbox("debugDraw", &debugDraw);
     if (isSamplingEnabled) {
         ImGui::SliderInt("sample count", &sampleCount, 1, 16);
         ImGui::SliderFloat("sampling coefficient", &samplingCoefficient, 0.f, 0.5f);
     }
-
+    bool reload = ImGui::Button("reload SSR");
+    if (reload)
+        shaders_m[2] = Shader::fromFile("shaders/SSR.vertex.glsl", "shaders/SSRFragment.glsl");
     shaders_m[2].use();
     shaders_m[2].setFloat("distanceBias", distanceBias);
     shaders_m[2].setFloat("rayStep", rayStep);
@@ -221,10 +241,19 @@ void Renderer::renderGui() {
     shaders_m[2].setBool("isSamplingEnabled", isSamplingEnabled);
     shaders_m[2].setInt("sampleCount", sampleCount);
     shaders_m[2].setFloat("samplingCoefficient", samplingCoefficient);
-    shaders_m[2].setFloat("isAdaptiveStepEnabled", isAdaptiveStepEnabled);
+    shaders_m[2].setBool("isExponentialStepEnabled", isExponentialStepEnabled);
+    shaders_m[2].setBool("isAdaptiveStepEnabled", isAdaptiveStepEnabled);
+    shaders_m[2].setBool("isBinarySearchEnabled", isBinarySearchEnabled);
+    shaders_m[2].setBool("debugDraw", debugDraw);
     ImGui::End();
-    ImGui::Begin("Texture check");
-    ImGui::Image((void *) (intptr_t) textureSceneId, ImVec2(width_m, height_m), ImVec2(0, 1), ImVec2(1, 0));
+    ImGui::Begin("scene Texture");
+    ImGui::Image((void*)(intptr_t)textureSceneId, ImVec2(width_m, height_m), ImVec2(0, 1), ImVec2(1, 0));
+    ImGui::End();
+    ImGui::Begin("normal Texture");
+    ImGui::Image((void*)(intptr_t)textureNormalId, ImVec2(width_m, height_m), ImVec2(0, 1), ImVec2(1, 0));
+    ImGui::End();
+    ImGui::Begin("depth Texture");
+    ImGui::Image((void*)(intptr_t)textureDepthId, ImVec2(width_m, height_m), ImVec2(0, 1), ImVec2(1, 0));
     ImGui::End();
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

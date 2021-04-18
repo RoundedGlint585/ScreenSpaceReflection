@@ -2,6 +2,10 @@ cmake_minimum_required(VERSION 3.1)
 
 project(imgui)
 
+find_package(glfw3 CONFIG REQUIRED)
+
+find_package(GLEW REQUIRED)
+find_package(GLM REQUIRED)
 
 set(HEADERS
         imgui/imconfig.h
@@ -27,5 +31,5 @@ set(LIBRARIES)
 
 
 add_library(${PROJECT_NAME} ${HEADERS} ${SOURCES})
-target_link_libraries(${PROJECT_NAME} ${CMAKE_DL_LIBS})
+target_link_libraries(${PROJECT_NAME} ${CMAKE_DL_LIBS} glfw glm::glm)
 target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_SOURCE_DIR})
