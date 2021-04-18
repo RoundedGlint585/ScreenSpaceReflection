@@ -2,20 +2,14 @@
 // Created by roundedglint585 on 2/14/21.
 //
 
-#ifndef PROJECT_OBJPARSER_H
-#define PROJECT_OBJPARSER_H
-//
-// Created by roundedglint585 on 8/3/19.
-//
-
 #pragma once
 #include <sstream>
 #include <vector>
 #include <tuple>
 #include <cstdint>
-#include <array>
 #include <unordered_map>
 #include <glm/gtx/hash.hpp>
+#include <array>
 #include "Mesh.h"
 
 namespace objParser {
@@ -100,7 +94,7 @@ namespace objParser {
                                 {vertices[parsedVertices[index] - 1], normals[parsedNormals[index] - 1], textures[parsedTextures[index]-1]});
                         if (possibleIndex == fromDataToIndex.end()) {
                             fromDataToIndex.insert({{vertices[parsedVertices[index] - 1], normals[parsedNormals[index] - 1], textures[parsedTextures[index]-1]},
-                                                    (uint32_t)preMeshVertex.size()});
+                                                    static_cast<uint32_t>(preMeshVertex.size())});
                             indices.emplace_back(preMeshVertex.size());
                             preMeshVertex.emplace_back(vertices[parsedVertices[index] - 1], normals[parsedNormals[index] - 1], textures[parsedTextures[index]-1]);
 
@@ -154,4 +148,3 @@ namespace objParser {
     }
 }
 
-#endif //PROJECT_OBJPARSER_H
