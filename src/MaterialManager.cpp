@@ -3,6 +3,7 @@
 //
 #include "../include/MaterialManager.h"
 #include "../include/Logger.h"
+#include <array>
 #include "stb_image.h"
 
 MaterialManager &MaterialManager::getInstance() {
@@ -11,7 +12,7 @@ MaterialManager &MaterialManager::getInstance() {
 }
 
 Material& MaterialManager::addMaterial(const std::string &name) {
-    std::array<std::string, 4> texturesName = {"BaseColor.png", "Metallic.png", "Normal.png", "Roughness.png"};
+    std::array<std::string, 4> texturesName{"BaseColor.png", "Metallic.png", "Normal.png", "Roughness.png"};
     std::array<GLuint, 4> texturesIndexes = {};
     std::array<GLuint, 4> textureType = {GL_RGB, GL_RED, GL_RGB, GL_RED};
     int width, height, nrChannels;
