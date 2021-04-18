@@ -5,6 +5,7 @@ This code repository is an implementation of screen space reflection technique o
 ## Platforms ##
 
 * Linux
+* Win
 
 ### Requirements
 
@@ -38,10 +39,14 @@ Current solution based on ImGUI library(they are amazing).
 | Distance bias        | Distance difference from which we will think that there is intersection         | 0.03          |
 | rayStep              | Step length + coefficient for adaptive step                                     | 0.1           |
 | Iteration count      | Amount of steps in ray marching                                                 | 100           |
+| Enable exp step      | Enabling exponential step for marching                                          | False         |
 | Enable adaptive step | Enabling step that should improve quality                                       | True          |
+| Enable binary   step | Enabling binary step, should be a bit better than adaptive                      | False         |
 | Enable sampling      | Enabling additional sampling to improve quality                                 | False         |
 | Sample Count         | Amount of additional rays(shows only with enabled sampling). Computational heavy| 4             |    
 | Sampling coefficient | Factor to addition to base direction(smaller closer to initial ray)             | 0.001         |
+| Debug draw           | Enabling debug draw to show reflection position                                 | False         |
+| Reload SSR           | Reloading shader in runtime                                                     |               |
 
 So just start program with these keys
 ### Examples
@@ -53,6 +58,7 @@ So just start program with these keys
 ## Authors
 
 * **Daniil Smolyakov** - *Initial work* - [DanonOfficial](https://github.com/DanonOfficial)
+* **Lcbx** - *binary step and debug draw* - [Lcbx](https://github.com/Lcbx)
 
 
 
